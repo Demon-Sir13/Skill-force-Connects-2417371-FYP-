@@ -29,19 +29,36 @@ export default function Subscriptions() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
+  const [gateway, setGateway] = useState('khalti');
+
   const handleSubscribe = async (plan) => {
     if (plan === current?.plan) return;
     setUpgrading(plan);
     try {
-      const { data } = await api.post('/payments/subscribe', { plan });
+      const { data } = await api.post('/payments/subscribe', { plan, gateway });
 
-      // If backend returned a payment URL → redirect to PeriPay gateway
+      // Khalti → redirect to payment URL
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
         return;
       }
 
-      // Otherwise it was auto-approved (free plan or dev mode)
+      // eSewa → submit form to eSewa
+      if (data.gateway === 'esewa' && data.params) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.paymentUrl;
+        Object.entries(data.params).forEach(([k, v]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden'; input.name = k; input.value = v;
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      // Auto-approved (free or dev mode)
       setCurrent(data.subscription || data);
       toast.success(plan === 'free' ? 'Switched to free plan' : `Upgraded to ${plan} plan!`);
     } catch (err) {
@@ -113,12 +130,18 @@ export default function Subscriptions() {
       </motion.div>
 
       <div className="mt-10 text-center">
-        <div className="inline-flex items-center gap-3 bg-white/[0.02] border border-white/[0.04] rounded-full px-6 py-3">
-          <span className="text-lg">💳</span>
-          <span className="text-sm text-gray-500">Payments via</span>
-          <span className="text-sm font-semibold text-emerald-400">Khalti</span>
-          <span className="text-sm text-gray-500">in NPR</span>
+        <p className="text-xs text-gray-500 mb-3">Choose payment method</p>
+        <div className="inline-flex items-center gap-2 bg-white/[0.02] border border-white/[0.04] rounded-full p-1">
+          <button onClick={() => setGateway('khalti')}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${gateway === 'khalti' ? 'bg-[#5C2D91] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>
+            Khalti
+          </button>
+          <button onClick={() => setGateway('esewa')}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${gateway === 'esewa' ? 'bg-[#60BB46] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>
+            eSewa
+          </button>
         </div>
+        <p className="text-[10px] text-gray-600 mt-2">All payments in NPR</p>
       </div>
     </div>
   );
