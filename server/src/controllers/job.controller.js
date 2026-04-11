@@ -150,12 +150,25 @@ const updateStatus = async (req, res) => {
     if (job.organizationId.toString() !== req.user._id.toString())
       return res.status(403).json({ message: 'Not authorized' });
 
-    // When marking completed, increment provider's job count
+    // When marking completed, increment provider's job count + reset availability
     if (status === 'completed' && job.status !== 'completed' && job.assignedProviderId) {
       await ProviderProfile.findOneAndUpdate(
         { userId: job.assignedProviderId },
-        { $inc: { totalJobsCompleted: 1 } }
+        {
+          $inc: { totalJobsCompleted: 1 },
+          availability: 'available',  // auto-reset to available
+          currentJobId: null,
+          availabilityNote: 'Just completed a job — available for new work!',
+        }
       );
+      // Notify provider they're now available
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        userId: job.assignedProviderId, type: 'system',
+        title: 'Job Completed — You\'re Available Again',
+        message: `"${job.title}" marked complete. Your status is now Available.`,
+        referenceUrl: '/dashboard',
+      });
     }
 
     job.status = status;

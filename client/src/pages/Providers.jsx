@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import api from '../utils/api';
 import ProviderCard from '../components/ProviderCard';
-import { Search, Users, X, ChevronLeft, ChevronRight, Star, MapPin } from 'lucide-react';
+import { Search, Users, X, ChevronLeft, ChevronRight, MapPin, Zap } from 'lucide-react';
 
-const POPULAR_SKILLS = ['React', 'Node.js', 'Python', 'Design', 'Marketing', 'DevOps', 'Security', 'Cleaning'];
+const POPULAR_SKILLS = ['React', 'Node.js', 'Python', 'Design', 'Marketing', 'Security', 'Cleaning', 'Nursing', 'Electrical'];
+const WORK_MODES = [
+  { value: '', label: 'All Work Types' },
+  { value: 'freelance', label: 'Freelance' },
+  { value: 'part-time', label: 'Part-Time' },
+  { value: 'full-time', label: 'Full-Time' },
+];
 
 export default function Providers() {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [skill, setSkill] = useState('');
   const [availability, setAvailability] = useState('');
+  const [workMode, setWorkMode] = useState('');
   const [location, setLocation] = useState('');
   const [minRating, setMinRating] = useState('');
   const [page, setPage] = useState(1);
@@ -22,6 +29,7 @@ export default function Providers() {
       const params = { page, limit: 12 };
       if (skill) params.skill = skill;
       if (availability) params.availability = availability;
+      if (workMode) params.workMode = workMode;
       if (location) params.location = location;
       if (minRating) params.rating = minRating;
       api.get('/providers', { params })
@@ -34,18 +42,39 @@ export default function Providers() {
         .finally(() => setLoading(false));
     }, 300);
     return () => clearTimeout(t);
-  }, [skill, availability, location, minRating, page]);
+  }, [skill, availability, workMode, location, minRating, page]);
 
-  useEffect(() => { setPage(1); }, [skill, availability, location, minRating]);
+  useEffect(() => { setPage(1); }, [skill, availability, workMode, location, minRating]);
 
-  const clearAll = () => { setSkill(''); setAvailability(''); setLocation(''); setMinRating(''); };
-  const hasFilters = skill || availability || location || minRating;
+  const clearAll = () => { setSkill(''); setAvailability(''); setWorkMode(''); setLocation(''); setMinRating(''); };
+  const hasFilters = skill || availability || workMode || location || minRating;
 
   return (
     <div className="page">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white mb-1">Service Providers</h1>
         <p className="text-gray-500 text-sm">{total} providers available</p>
+      </div>
+
+      {/* Quick filter: Available Now */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <button onClick={() => setAvailability(availability === 'available' ? '' : 'available')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            availability === 'available'
+              ? 'bg-emerald-400/10 border-emerald-400/30 text-emerald-400'
+              : 'border-surface-border text-gray-400 hover:border-emerald-400/30 hover:text-emerald-400'
+          }`}>
+          <span className={`w-2 h-2 rounded-full ${availability === 'available' ? 'bg-emerald-400 animate-pulse' : 'bg-gray-600'}`} />
+          Available Now
+        </button>
+        <button onClick={() => setWorkMode(workMode === 'freelance' ? '' : 'freelance')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${workMode === 'freelance' ? 'bg-brand-blue/10 border-brand-blue/30 text-brand-blue' : 'border-surface-border text-gray-400 hover:text-white'}`}>
+          Freelance
+        </button>
+        <button onClick={() => setWorkMode(workMode === 'full-time' ? '' : 'full-time')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${workMode === 'full-time' ? 'bg-brand-indigo/10 border-brand-indigo/30 text-brand-indigo' : 'border-surface-border text-gray-400 hover:text-white'}`}>
+          Full-Time
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-5">
@@ -57,11 +86,8 @@ export default function Providers() {
           <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
           <input className="input pl-10" placeholder="Location..." value={location} onChange={e => setLocation(e.target.value)} />
         </div>
-        <select className="input w-40 bg-surface-input" value={availability} onChange={e => setAvailability(e.target.value)}>
-          <option value="">All Status</option>
-          <option value="available">Available</option>
-          <option value="busy">Busy</option>
-          <option value="unavailable">Unavailable</option>
+        <select className="input w-40 bg-surface-input" value={workMode} onChange={e => setWorkMode(e.target.value)}>
+          {WORK_MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>
         <select className="input w-36 bg-surface-input" value={minRating} onChange={e => setMinRating(e.target.value)}>
           <option value="">Any Rating</option>

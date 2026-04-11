@@ -4,9 +4,10 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import JobCard from '../components/JobCard';
+import AvailabilityToggle from '../components/AvailabilityToggle';
 import {
   Briefcase, Star, MessageSquare, User, ArrowRight,
-  Search, DollarSign, ListChecks, Award, TrendingUp, Sparkles, Target,
+  Search, DollarSign, ListChecks, Award, TrendingUp, Sparkles, Target, Circle,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Avatar from '../components/Avatar';
@@ -60,7 +61,7 @@ export default function ProviderDashboard() {
   return (
     <div className="page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <p className="text-gray-500 text-sm mb-1">Provider Dashboard</p>
           <h1 className="text-2xl font-bold text-white">
@@ -75,6 +76,34 @@ export default function ProviderDashboard() {
             <User size={15} />Edit Profile
           </Link>
         </div>
+      </div>
+
+      {/* Availability + Current Job Banner */}
+      <div className="card p-4 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Your Status</p>
+          <AvailabilityToggle
+            current={profile?.availability || 'available'}
+            workMode={profile?.workMode || 'any'}
+            onUpdate={(updated) => setProfile(prev => ({ ...prev, ...updated }))}
+          />
+        </div>
+        {profile?.currentJobId && (
+          <div className="flex items-center gap-3 bg-yellow-400/5 border border-yellow-400/20 rounded-xl px-4 py-3">
+            <div className="w-8 h-8 rounded-lg bg-yellow-400/10 flex items-center justify-center">
+              <Briefcase size={14} className="text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Currently working on</p>
+              <p className="text-sm font-semibold text-yellow-400">
+                {profile.currentJobId?.title || 'Active Job'}
+              </p>
+            </div>
+          </div>
+        )}
+        {profile?.availabilityNote && (
+          <p className="text-xs text-gray-500 italic">"{profile.availabilityNote}"</p>
+        )}
       </div>
 
       {/* Stats */}

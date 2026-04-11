@@ -72,6 +72,13 @@ export default function ProviderCard({ provider, onAssign }) {
           </span>
         </div>
 
+        {/* Work mode badge */}
+        {provider.workMode && provider.workMode !== 'any' && (
+          <span className="text-[9px] px-2 py-0.5 rounded-md bg-brand-indigo/5 text-brand-indigo/70 border border-brand-indigo/10 w-fit capitalize">
+            {provider.workMode}
+          </span>
+        )}
+
         {/* Skills */}
         {provider.skills?.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -91,10 +98,17 @@ export default function ProviderCard({ provider, onAssign }) {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] mt-auto">
-          <span className={`text-[10px] capitalize ${
+          <span className={`text-[10px] font-semibold flex items-center gap-1 ${
             provider.availability === 'available' ? 'text-emerald-400' :
             provider.availability === 'busy' ? 'text-yellow-400' : 'text-gray-500'
-          }`}>● {provider.availability || 'available'}</span>
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              provider.availability === 'available' ? 'bg-emerald-400 animate-pulse' :
+              provider.availability === 'busy' ? 'bg-yellow-400' : 'bg-gray-500'
+            }`} />
+            {provider.availability === 'available' ? 'Available Now' :
+             provider.availability === 'busy' ? 'Busy' : 'Offline'}
+          </span>
           <span className="text-[10px] text-gray-700 group-hover:text-brand-blue flex items-center gap-1 transition-colors">
             View Profile <ExternalLink size={10} />
           </span>

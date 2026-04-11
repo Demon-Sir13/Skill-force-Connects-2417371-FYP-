@@ -31,8 +31,19 @@ async function calculateMatchScore(providerId, job) {
   }
   // Trust score (10 pts)
   score += ((profile.userId?.trustScore || 50) / 100) * 10;
-  // Availability (5 pts)
+  // Availability (5 pts) — available gets full points, busy gets 0
   if (profile.availability === 'available') score += 5;
+  else if (profile.availability === 'busy') score += 0;
+  else score += 0; // unavailable
+
+  // Work mode match (5 pts)
+  if (profile.workMode === 'any') score += 5;
+  else if (job.jobType && (
+    (profile.workMode === 'freelance' && job.jobType === 'one-time') ||
+    (profile.workMode === 'part-time' && job.jobType === 'part-time') ||
+    (profile.workMode === 'full-time' && ['full-time', 'contract'].includes(job.jobType))
+  )) score += 5;
+
   // Verification (5 pts)
   if (profile.verificationStatus === 'approved' || profile.userId?.verified) score += 5;
 

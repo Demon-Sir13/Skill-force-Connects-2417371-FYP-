@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillForce Connects — Product Document</title>
+<style>
+  @page { size: A4; margin: 0; }
+  @media print {
+    .page-break { page-break-before: always; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1a1a2e; line-height: 1.7; }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    width: 210mm; min-height: 297mm;
+    background: linear-gradient(160deg, #0B0F19 0%, #0f2b46 45%, #0d4f4f 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 50px; text-align: center; position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; top: -100px; right: -100px;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
+  }
+  .cover::after {
+    content: ''; position: absolute; bottom: -80px; left: -80px;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
+  }
+  .cover-logo {
+    width: 80px; height: 80px; border-radius: 20px;
+    background: linear-gradient(135deg, #0EA5E9, #6366F1);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px; box-shadow: 0 8px 32px rgba(14,165,233,0.4);
+    position: relative; z-index: 1;
+  }
+  .cover-logo svg { width: 40px; height: 40px; }
+  .cover h1 { font-size: 48pt; font-weight: 800; color: #fff; margin-bottom: 6px; position: relative; z-index: 1; }
+  .cover h1 em { font-style: normal; background: linear-gradient(135deg,#0EA5E9,#6366F1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover .tagline { font-size: 14pt; color: #8ecae6; margin-bottom: 40px; position: relative; z-index: 1; }
+  .cover .divider { width: 60px; height: 3px; background: linear-gradient(135deg,#0EA5E9,#6366F1); border-radius: 2px; margin: 0 auto 40px; }
+  .cover .doc-type { font-size: 11pt; color: #38bdf8; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; position: relative; z-index: 1; }
+  .cover .doc-title { font-size: 18pt; color: #fff; font-weight: 700; margin-bottom: 50px; position: relative; z-index: 1; }
+  .cover-meta { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item .label { font-size: 8pt; color: #8ecae6; text-transform: uppercase; letter-spacing: 1px; }
+  .cover-meta-item .value { font-size: 11pt; color: #fff; font-weight: 600; margin-top: 2px; }
+  .cover-footer { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font-size: 9pt; color: #4a6fa5; z-index: 1; }
+
+  /* ── CONTENT PAGES ── */
+  .content { width: 210mm; padding: 20mm 22mm; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 36px; }
+  .section-num { font-size: 8pt; font-weight: 700; color: #0EA5E9; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .section h2 { font-size: 20pt; font-weight: 800; color: #0f2b46; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 3px solid #0d9488; }
+  .section p { font-size: 10.5pt; color: #333; margin-bottom: 10px; }
+
+  /* ── FEATURE CARDS ── */
+  .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .feature-card { background: #f8fbfd; border: 1.5px solid #d0e4f0; border-radius: 10px; padding: 16px 18px; }
+  .feature-card .fc-icon { font-size: 20pt; margin-bottom: 6px; }
+  .feature-card h4 { font-size: 11pt; font-weight: 700; color: #0f2b46; margin-bottom: 5px; }
+  .feature-card p, .feature-card li { font-size: 9.5pt; color: #444; line-height: 1.6; }
+  .feature-card ul { padding-left: 14px; }
+  .feature-card li { margin-bottom: 2px; }
+
+  /* ── TECH STACK ── */
+  .tech-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .tech-badge { background: #0f2b46; color: #fff; border-radius: 20px; padding: 6px 16px; font-size: 9.5pt; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .tech-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .tech-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  .tech-table th { background: #0f2b46; color: #fff; padding: 9px 14px; text-align: left; font-size: 10pt; }
+  .tech-table td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; font-size: 9.5pt; }
+  .tech-table tr:nth-child(even) td { background: #f8fbfd; }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight { background: linear-gradient(135deg, #0d9488, #0f766e); color: #fff; border-radius: 10px; padding: 18px 22px; margin: 16px 0; }
+  .highlight h3 { font-size: 12pt; margin-bottom: 8px; }
+  .highlight p, .highlight li { font-size: 9.5pt; color: #d1fae5; line-height: 1.65; }
+  .highlight ul { padding-left: 16px; }
+
+  /* ── BLUE BOX ── */
+  .blue-box { background: #eff6ff; border-left: 4px solid #0EA5E9; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 14px 0; }
+  .blue-box p, .blue-box li { font-size: 9.5pt; color: #1e3a5f; line-height: 1.65; }
+  .blue-box ul { padding-left: 16px; }
+
+  /* ── SCOPE TABLE ── */
+  .scope-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  .scope-table th { background: #0f2b46; color: #fff; padding: 9px 14px; text-align: left; font-size: 10pt; }
+  .scope-table td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; font-size: 9.5pt; vertical-align: top; }
+  .scope-table tr:nth-child(even) td { background: #f8fbfd; }
+  .badge-yes { background: #d1fae5; color: #065f46; padding: 2px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 600; }
+  .badge-no { background: #fee2e2; color: #991b1b; padding: 2px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 600; }
+  .badge-future { background: #dbeafe; color: #1e40af; padding: 2px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 600; }
+
+  /* ── VALUE PROPS ── */
+  .value-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .value-card { background: #f8fbfd; border: 1.5px solid #d0e4f0; border-radius: 10px; padding: 16px; text-align: center; }
+  .value-card .vi { font-size: 24pt; margin-bottom: 6px; }
+  .value-card .vn { font-size: 22pt; font-weight: 800; color: #0d9488; }
+  .value-card p { font-size: 9pt; color: #555; margin-top: 4px; }
+
+  /* ── FUTURE SCOPE ── */
+  .future-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .future-card { border-radius: 10px; padding: 16px 18px; }
+  .future-card.blue { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+  .future-card.green { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+  .future-card.purple { background: #faf5ff; border: 1.5px solid #e9d5ff; }
+  .future-card.orange { background: #fff7ed; border: 1.5px solid #fed7aa; }
+  .future-card h4 { font-size: 11pt; font-weight: 700; color: #0f2b46; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+  .future-card li { font-size: 9.5pt; color: #444; line-height: 1.65; margin-bottom: 2px; }
+  .future-card ul { padding-left: 16px; }
+
+  /* ── CONCLUSION ── */
+  .conclusion { background: linear-gradient(135deg, #0B0F19, #0f2b46); color: #fff; border-radius: 12px; padding: 28px 32px; margin-top: 20px; }
+  .conclusion h3 { font-size: 16pt; font-weight: 700; margin-bottom: 12px; color: #38bdf8; }
+  .conclusion p { font-size: 10.5pt; color: #b8d4e3; line-height: 1.75; margin-bottom: 10px; }
+  .conclusion .sign { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 9.5pt; color: #8ecae6; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 14px 0; }
+  .flow-step { background: #0f2b46; color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 9.5pt; font-weight: 600; text-align: center; }
+  .flow-arr { color: #0d9488; font-size: 16pt; font-weight: bold; }
+
+  /* ── HEADER/FOOTER ── */
+  .page-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; margin-bottom: 28px; }
+  .page-header .brand { font-size: 12pt; font-weight: 800; color: #0f2b46; }
+  .page-header .brand em { font-style: normal; color: #0EA5E9; }
+  .page-header .pg { font-size: 9pt; color: #999; }
+  .page-footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 8.5pt; color: #aaa; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ COVER PAGE -->
+<div class="cover">
+  <div class="cover-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  </div>
+  <h1>Skill<em>Force</em></h1>
+  <div class="tagline">Connecting Organizations with Skilled Service Providers in Nepal</div>
+  <div class="divider"></div>
+  <div class="doc-type">Product Overview Document</div>
+  <div class="doc-title">Platform Capabilities, Architecture & Future Roadmap</div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><div class="label">Prepared by</div><div class="value">Saharsh Pathak</div></div>
+    <div class="cover-meta-item"><div class="label">Version</div><div class="value">Prototype v1.0</div></div>
+    <div class="cover-meta-item"><div class="label">Market</div><div class="value">Nepal</div></div>
+    <div class="cover-meta-item"><div class="label">Year</div><div class="value">2025 / 2026</div></div>
+  </div>
+  <div class="cover-footer">Confidential — For Client & Stakeholder Review Only</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PAGE 2 -->
+<div class="content page-break">
+  <div class="page-header">
+    <div class="brand">Skill<em>Force</em> Connects</div>
+    <div class="pg">Product Overview Document · v1.0</div>
+  </div>
+
+  <!-- SECTION 1: PROJECT OVERVIEW -->
+  <div class="section">
+    <div class="section-num">Section 01</div>
+    <h2>Project Overview</h2>
+    <p>
+      <strong>SkillForce Connects</strong> is a modern, web-based SaaS platform purpose-built for Nepal's workforce market. It creates a centralized digital marketplace where organizations — hospitals, hotels, corporate offices, event companies, and security agencies — can discover, evaluate, and hire verified skilled service providers for roles in cleaning, security, catering, maintenance, IT, healthcare, and more.
+    </p>
+    <p>
+      Nepal's manpower hiring process has historically been fragmented, informal, and opaque. Organizations rely on word-of-mouth referrals, phone calls, and unverified intermediaries — leading to poor matches, wasted time, and lack of accountability. SkillForce solves this by digitizing the entire hiring lifecycle: from job posting and intelligent provider matching, through application management and digital contracts, to real-time communication and NPR-based payments via Khalti and eSewa.
+    </p>
+    <div class="highlight">
+      <h3>The Core Problem We Solve</h3>
+      <p>Organizations in Nepal spend an average of 2–4 weeks finding reliable service providers through informal channels, with no verification, no contracts, and no accountability. SkillForce reduces this to hours — with verified profiles, AI-powered matching, and a structured digital workflow from hire to payment.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: USER ROLES -->
+  <div class="section">
+    <div class="section-num">Section 02</div>
+    <h2>Platform Users & Roles</h2>
+    <p>SkillForce operates on a three-role architecture, each with dedicated dashboards and permissions:</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="fc-icon">🏢</div>
+        <h4>Organization (Client)</h4>
+        <ul>
+          <li>Post job listings with requirements</li>
+          <li>Browse and filter service providers</li>
+          <li>Review applications with AI scores</li>
+          <li>Generate and sign digital contracts</li>
+          <li>Manage payments via Khalti / eSewa</li>
+          <li>Access analytics dashboard</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">👷</div>
+        <h4>Service Provider (Worker)</h4>
+        <ul>
+          <li>Create detailed professional profile</li>
+          <li>Upload CV, portfolio, certifications</li>
+          <li>Browse and apply to relevant jobs</li>
+          <li>Track application status in real-time</li>
+          <li>Communicate via secure messaging</li>
+          <li>Post work progress updates</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🛡️</div>
+        <h4>Admin (Platform Manager)</h4>
+        <ul>
+          <li>Full user management and verification</li>
+          <li>Monitor all jobs and applications</li>
+          <li>Revenue and subscription analytics</li>
+          <li>Suspend or approve accounts</li>
+          <li>View platform-wide activity logs</li>
+          <li>Manage provider verification badges</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🔐</div>
+        <h4>Authentication & Security</h4>
+        <ul>
+          <li>Two-factor authentication (Email + OTP)</li>
+          <li>JWT-based stateless authentication</li>
+          <li>Role-based access control (RBAC)</li>
+          <li>Account lockout after 5 failed attempts</li>
+          <li>Trusted device support (skip OTP)</li>
+          <li>bcrypt password hashing (12 rounds)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SkillForce Connects — Confidential Product Document</span>
+    <span>Page 2</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PAGE 3 -->
+<div class="content page-break">
+  <div class="page-header">
+    <div class="brand">Skill<em>Force</em> Connects</div>
+    <div class="pg">Product Overview Document · v1.0</div>
+  </div>
+
+  <!-- SECTION 3: IMPLEMENTED FEATURES -->
+  <div class="section">
+    <div class="section-num">Section 03</div>
+    <h2>Implemented Features — Current Prototype</h2>
+
+    <p style="font-weight:700;color:#0d9488;margin-bottom:8px">🔍 Job & Hiring System</p>
+    <div class="blue-box">
+      <ul>
+        <li>Organizations post jobs with title, description, category, budget (NPR), deadline, district, urgency level, and required skills</li>
+        <li>Providers browse jobs with advanced filters: category, district, budget range, urgency, job type</li>
+        <li>Professional application form: cover letter, CV upload, portfolio links, expected salary, availability date</li>
+        <li>Application statuses: Pending → Shortlisted → Interview → Approved → Contracted → Rejected</li>
+        <li>AI-generated job descriptions based on category (Healthcare, Security, IT, etc.)</li>
+      </ul>
+    </div>
+
+    <p style="font-weight:700;color:#0d9488;margin:14px 0 8px">🤖 AI Smart Matching System</p>
+    <div class="blue-box">
+      <ul>
+        <li><strong>Match Score (0–100):</strong> Skills 40% + Rating 15% + Experience 15% + Location 10% + Trust Score 10% + Availability 5% + Verification 5%</li>
+        <li><strong>Resume Score (0–100):</strong> Skills 40% + Experience 20% + Profile Completeness 20% + Portfolio 20%</li>
+        <li><strong>Success Prediction:</strong> High / Medium / Low — based on resume score, track record, rating, and trust</li>
+        <li>Applications automatically sorted by highest score — organizations see best candidates first</li>
+      </ul>
+    </div>
+
+    <p style="font-weight:700;color:#0d9488;margin:14px 0 8px">📄 Contract & Workflow System</p>
+    <div class="blue-box">
+      <ul>
+        <li>Digital contracts auto-generated from approved applications (org name, provider name, job title, amount, terms)</li>
+        <li>Digital signing by both parties — contract activates when both sign</li>
+        <li>Work progress timeline — providers post updates, organizations respond and approve</li>
+        <li>Contract history and status tracking (Draft → Signed → Active → Completed)</li>
+      </ul>
+    </div>
+
+    <p style="font-weight:700;color:#0d9488;margin:14px 0 8px">💬 Communication System</p>
+    <div class="blue-box">
+      <ul>
+        <li>Real-time messaging powered by Socket.io — instant delivery without page refresh</li>
+        <li>Messaging unlocked only after application approval — prevents spam</li>
+        <li>10 free messages per conversation, then premium unlock via payment</li>
+        <li>Real-time notifications for applications, approvals, contracts, and messages</li>
+        <li>Notification click navigation — each notification links to the relevant page</li>
+      </ul>
+    </div>
+
+    <p style="font-weight:700;color:#0d9488;margin:14px 0 8px">💳 Payment Integration</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="fc-icon">💜</div>
+        <h4>Khalti Integration</h4>
+        <p>Nepal's leading digital wallet. Payments processed in NPR via Khalti's e-Payment API v2. Amount sent in paisa for precision.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">💚</div>
+        <h4>eSewa Integration</h4>
+        <p>Nepal's most widely used payment gateway. HMAC-SHA256 signature verification for secure transactions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🆓</div>
+        <h4>Free Plan</h4>
+        <p>Basic profile, 5 applications/month, 10 free messages. No payment required.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">⭐</div>
+        <h4>Pro Plan — ₨150/month</h4>
+        <p>Unlimited applications, messaging, verified badge, portfolio boost, contract generator.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SkillForce Connects — Confidential Product Document</span>
+    <span>Page 3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PAGE 4 -->
+<div class="content page-break">
+  <div class="page-header">
+    <div class="brand">Skill<em>Force</em> Connects</div>
+    <div class="pg">Product Overview Document · v1.0</div>
+  </div>
+
+  <!-- SECTION 4: TECH STACK -->
+  <div class="section">
+    <div class="section-num">Section 04</div>
+    <h2>System Architecture & Technology Stack</h2>
+    <p>SkillForce is built on the MERN stack — a proven, scalable combination of technologies used by leading SaaS companies worldwide.</p>
+
+    <table class="tech-table">
+      <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+      <tr><td><strong>Frontend</strong></td><td>React 18 + Vite</td><td>Fast, component-based UI with hot module replacement</td></tr>
+      <tr><td></td><td>Tailwind CSS</td><td>Utility-first styling for consistent, responsive design</td></tr>
+      <tr><td></td><td>Framer Motion</td><td>Smooth animations and page transitions</td></tr>
+      <tr><td></td><td>Recharts</td><td>Analytics charts and data visualization</td></tr>
+      <tr><td><strong>Backend</strong></td><td>Node.js + Express.js</td><td>Non-blocking REST API server handling concurrent requests</td></tr>
+      <tr><td></td><td>Socket.io</td><td>Real-time bidirectional communication for chat</td></tr>
+      <tr><td></td><td>Multer</td><td>File upload handling (CV, images, portfolio)</td></tr>
+      <tr><td><strong>Database</strong></td><td>MongoDB + Mongoose</td><td>Flexible document storage for complex nested profiles</td></tr>
+      <tr><td><strong>Security</strong></td><td>JWT + bcryptjs</td><td>Stateless auth + secure password hashing</td></tr>
+      <tr><td></td><td>Helmet + CORS</td><td>HTTP security headers and cross-origin protection</td></tr>
+      <tr><td></td><td>express-rate-limit</td><td>DDoS and brute-force protection</td></tr>
+      <tr><td><strong>Payments</strong></td><td>Khalti API v2</td><td>NPR digital wallet payments</td></tr>
+      <tr><td></td><td>eSewa API</td><td>Nepal's most popular payment gateway</td></tr>
+    </table>
+
+    <p style="margin-top:16px;font-weight:700;color:#0f2b46">End-to-End Workflow:</p>
+    <div class="flow">
+      <div class="flow-step">📋 Post Job</div><div class="flow-arr">→</div>
+      <div class="flow-step">📝 Apply</div><div class="flow-arr">→</div>
+      <div class="flow-step">🤖 AI Score</div><div class="flow-arr">→</div>
+      <div class="flow-step">✅ Approve</div><div class="flow-arr">→</div>
+      <div class="flow-step">📄 Contract</div><div class="flow-arr">→</div>
+      <div class="flow-step">💬 Chat</div><div class="flow-arr">→</div>
+      <div class="flow-step">🚀 Complete</div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: SCOPE -->
+  <div class="section">
+    <div class="section-num">Section 05</div>
+    <h2>Current Platform Scope</h2>
+    <table class="scope-table">
+      <tr><th>Capability</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>End-to-end hiring workflow</td><td><span class="badge-yes">✓ Live</span></td><td>Post → Apply → Contract → Chat → Complete</td></tr>
+      <tr><td>Multiple service categories</td><td><span class="badge-yes">✓ Live</span></td><td>Healthcare, Security, IT, Cleaning, Construction, Events</td></tr>
+      <tr><td>AI-powered matching</td><td><span class="badge-yes">✓ Live</span></td><td>Rule-based scoring (0–100)</td></tr>
+      <tr><td>Digital contracts</td><td><span class="badge-yes">✓ Live</span></td><td>Auto-generated with digital signing</td></tr>
+      <tr><td>Real-time messaging</td><td><span class="badge-yes">✓ Live</span></td><td>Socket.io powered</td></tr>
+      <tr><td>Khalti + eSewa payments</td><td><span class="badge-yes">✓ Live</span></td><td>NPR-based, test mode</td></tr>
+      <tr><td>Admin analytics dashboard</td><td><span class="badge-yes">✓ Live</span></td><td>Revenue, users, subscriptions</td></tr>
+      <tr><td>2FA OTP authentication</td><td><span class="badge-yes">✓ Live</span></td><td>Email-based OTP</td></tr>
+      <tr><td>Mobile application</td><td><span class="badge-future">→ Planned</span></td><td>React Native — next phase</td></tr>
+      <tr><td>KYC verification</td><td><span class="badge-future">→ Planned</span></td><td>Citizenship ID verification</td></tr>
+      <tr><td>ML-based matching</td><td><span class="badge-future">→ Planned</span></td><td>Trained model replacing rule-based</td></tr>
+      <tr><td>Multi-language (Nepali)</td><td><span class="badge-future">→ Planned</span></td><td>i18n support</td></tr>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span>SkillForce Connects — Confidential Product Document</span>
+    <span>Page 4</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PAGE 5 -->
+<div class="content page-break">
+  <div class="page-header">
+    <div class="brand">Skill<em>Force</em> Connects</div>
+    <div class="pg">Product Overview Document · v1.0</div>
+  </div>
+
+  <!-- SECTION 6: LIMITATIONS -->
+  <div class="section">
+    <div class="section-num">Section 06</div>
+    <h2>Current Limitations</h2>
+    <p>As a first-generation prototype, SkillForce has been built to validate the core concept and workflow. The following limitations are acknowledged and addressed in the next development phase:</p>
+    <table class="scope-table">
+      <tr><th>Limitation</th><th>Current State</th><th>Planned Resolution</th></tr>
+      <tr><td>Provider Verification</td><td>Self-declared profile information</td><td>Full KYC with citizenship/ID document upload</td></tr>
+      <tr><td>AI Matching</td><td>Rule-based weighted scoring algorithm</td><td>ML-trained model with historical hiring data</td></tr>
+      <tr><td>Mobile Access</td><td>Web-only (responsive design)</td><td>React Native mobile app (iOS + Android)</td></tr>
+      <tr><td>Payment Mode</td><td>Khalti in test/sandbox mode</td><td>Live merchant account activation</td></tr>
+      <tr><td>Language Support</td><td>English only</td><td>Nepali + English multi-language (i18n)</td></tr>
+      <tr><td>Scalability Testing</td><td>Local development environment</td><td>Load testing + cloud deployment (AWS/Vercel)</td></tr>
+    </table>
+  </div>
+
+  <!-- SECTION 7: FUTURE SCOPE -->
+  <div class="section">
+    <div class="section-num">Section 07</div>
+    <h2>Future Roadmap — Next Prototype</h2>
+    <p>The following enhancements are planned for the next development phase, transforming SkillForce from a prototype into a production-ready enterprise platform:</p>
+
+    <div class="future-grid">
+      <div class="future-card blue">
+        <h4>🤖 AI & Intelligence</h4>
+        <ul>
+          <li>ML-trained matching model using historical hiring data</li>
+          <li>Predictive analytics for hiring success rates</li>
+          <li>Automated job description generation (GPT-based)</li>
+          <li>Fraud detection for fake profiles</li>
+        </ul>
+      </div>
+      <div class="future-card green">
+        <h4>📱 Platform Expansion</h4>
+        <ul>
+          <li>React Native mobile app (iOS + Android)</li>
+          <li>Progressive Web App (PWA) for offline access</li>
+          <li>Nepali + English multi-language support</li>
+          <li>SMS notifications via Sparrow SMS</li>
+        </ul>
+      </div>
+      <div class="future-card purple">
+        <h4>🔐 Trust & Verification</h4>
+        <ul>
+          <li>KYC system — citizenship / national ID upload</li>
+          <li>Background check integration</li>
+          <li>Biometric login for mobile app</li>
+          <li>End-to-end encrypted messaging</li>
+        </ul>
+      </div>
+      <div class="future-card orange">
+        <h4>💼 Business Features</h4>
+        <ul>
+          <li>Escrow-based payment system</li>
+          <li>Commission-based hiring model</li>
+          <li>Enterprise team accounts</li>
+          <li>Advanced client analytics dashboard</li>
+          <li>API access for enterprise integrations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 8: VALUE PROPOSITION -->
+  <div class="section">
+    <div class="section-num">Section 08</div>
+    <h2>Value Proposition</h2>
+    <p>SkillForce delivers measurable business value to both organizations and service providers:</p>
+
+    <div class="value-grid">
+      <div class="value-card"><div class="vi">⚡</div><div class="vn">60–70%</div><p>Reduction in time-to-hire compared to traditional methods</p></div>
+      <div class="value-card"><div class="vi">🎯</div><div class="vn">AI</div><p>Intelligent matching ensures right provider for every job</p></div>
+      <div class="value-card"><div class="vi">🔒</div><div class="vn">100%</div><p>Digital contracts — every hire is legally documented</p></div>
+      <div class="value-card"><div class="vi">💳</div><div class="vn">NPR</div><p>Local payments via Khalti + eSewa — no foreign currency</p></div>
+      <div class="value-card"><div class="vi">📊</div><div class="vn">Real-time</div><p>Live dashboards for organizations and admin</p></div>
+      <div class="value-card"><div class="vi">🇳🇵</div><div class="vn">Nepal</div><p>Purpose-built for Nepal's workforce market and culture</p></div>
+    </div>
+
+    <div class="highlight" style="margin-top:18px">
+      <h3>Why SkillForce Wins</h3>
+      <ul>
+        <li><strong>For Organizations:</strong> Find verified providers in hours, not weeks. Structured workflow eliminates informal hiring risks.</li>
+        <li><strong>For Providers:</strong> Professional digital presence, fair opportunity discovery, and secure payment collection.</li>
+        <li><strong>For Nepal:</strong> Digitizes the informal manpower market — creating transparency, accountability, and economic opportunity.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SkillForce Connects — Confidential Product Document</span>
+    <span>Page 5</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PAGE 6 -->
+<div class="content page-break">
+  <div class="page-header">
+    <div class="brand">Skill<em>Force</em> Connects</div>
+    <div class="pg">Product Overview Document · v1.0</div>
+  </div>
+
+  <!-- SECTION 9: CONCLUSION -->
+  <div class="section">
+    <div class="section-num">Section 09</div>
+    <h2>Conclusion</h2>
+    <div class="conclusion">
+      <h3>SkillForce — Transforming Nepal's Workforce Market</h3>
+      <p>
+        SkillForce Connects represents a significant step forward in modernizing how Nepal's organizations hire skilled service providers. By combining a professional digital workflow with AI-powered matching, real-time communication, digital contracts, and local payment integration, the platform addresses a genuine market gap that affects thousands of businesses and workers across the country.
+      </p>
+      <p>
+        The current prototype demonstrates a fully functional end-to-end hiring system — from job posting through to contract completion — built on a scalable, enterprise-grade technology stack. With planned enhancements including KYC verification, ML-based matching, mobile applications, and escrow payments, SkillForce is positioned to become Nepal's leading workforce marketplace.
+      </p>
+      <p>
+        The platform's subscription-based SaaS model, combined with commission-based revenue streams, provides a clear and sustainable path to commercial viability. SkillForce is not just a student project — it is a market-ready product with real potential to transform how Nepal's informal manpower economy operates.
+      </p>
+      <div class="sign">
+        Prepared by: <strong>Saharsh Pathak</strong> &nbsp;|&nbsp;
+        Herald College Kathmandu &nbsp;|&nbsp;
+        Affiliated to University of Wolverhampton &nbsp;|&nbsp;
+        2025/26
+      </div>
+    </div>
+  </div>
+
+
+  <div class="page-footer"> 
+    <span>SkillForce Connects — Confidential Product Document</span>
+    <span>Page 6 — End of Document</span>
+  </div>
+</div>
+
+</body>
+</html>

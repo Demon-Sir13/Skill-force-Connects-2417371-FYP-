@@ -2,8 +2,8 @@ const Application = require('../models/Application');
 const Job = require('../models/Job');
 const Notification = require('../models/Notification');
 const Contract = require('../models/Contract');
-const { calculateMatchScore, profileCompleteness, calculateResumeScore, predictSuccess } = require('../utils/matchScore');
 const ProviderProfile = require('../models/ProviderProfile');
+const { calculateMatchScore, profileCompleteness, calculateResumeScore, predictSuccess } = require('../utils/matchScore');
 
 // Helper: emit socket event if available
 const emitTo = (userId, event, data) => {
@@ -123,12 +123,22 @@ const updateApplicationStatus = async (req, res) => {
     app.status = status;
     await app.save();
 
-    // If approved, assign provider to job and update job status
+    // If approved, assign provider to job, update job status, set provider to busy
     if (status === 'approved') {
       await Job.findByIdAndUpdate(app.jobId._id, {
         assignedProviderId: app.providerId,
         status: 'in-progress',
       });
+      // Auto-set provider availability to busy
+      await ProviderProfile.findOneAndUpdate(
+        { userId: app.providerId },
+        { availability: 'busy', currentJobId: app.jobId._id }
+      );
+    }
+
+    // If job completed/contracted, allow provider to go back to available
+    if (status === 'contracted') {
+      // Don't auto-change — provider chooses when to go available again
     }
 
     // Notify provider + socket

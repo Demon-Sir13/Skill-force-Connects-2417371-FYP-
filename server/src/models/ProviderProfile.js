@@ -20,6 +20,14 @@ const galleryItemSchema = new mongoose.Schema({
   caption: { type: String, default: '' },
 }, { _id: true });
 
+// Weekly time slot: e.g. { day: 'Monday', startTime: '09:00', endTime: '17:00' }
+const timeSlotSchema = new mongoose.Schema({
+  day: { type: String, enum: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'], required: true },
+  startTime: { type: String, default: '09:00' },
+  endTime: { type: String, default: '17:00' },
+  available: { type: Boolean, default: true },
+}, { _id: false });
+
 const providerProfileSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
@@ -39,11 +47,28 @@ const providerProfileSchema = new mongoose.Schema(
     totalReviews: { type: Number, default: 0 },
     totalJobsCompleted: { type: Number, default: 0 },
     totalEarnings: { type: Number, default: 0 },
+
+    // ── AVAILABILITY SYSTEM ──────────────────────────────────────────────────
     availability: {
       type: String,
       enum: ['available', 'busy', 'unavailable'],
       default: 'available',
     },
+    availabilityNote: { type: String, default: '' }, // e.g. "Back on Monday"
+    availableFrom: { type: Date, default: null },    // when they'll be free again
+    currentJobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job', default: null },
+
+    // ── WORK MODE ────────────────────────────────────────────────────────────
+    workMode: {
+      type: String,
+      enum: ['freelance', 'part-time', 'full-time', 'any'],
+      default: 'any',
+    },
+
+    // ── WEEKLY SCHEDULE ──────────────────────────────────────────────────────
+    weeklySchedule: [timeSlotSchema],
+
+    // ── VERIFICATION ─────────────────────────────────────────────────────────
     verificationStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

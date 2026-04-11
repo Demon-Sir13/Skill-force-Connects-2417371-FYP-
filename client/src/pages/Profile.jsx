@@ -4,6 +4,7 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { User, Building2, Wrench, Save, Plus, X, Link as LinkIcon, CheckCircle, MapPin, Phone, Globe, Award, BookOpen } from 'lucide-react';
 import ImageUpload from '../components/ImageUpload';
+import WeeklySchedule from '../components/WeeklySchedule';
 
 function completeness(profile, isOrg) {
   if (isOrg) {
@@ -147,6 +148,15 @@ export default function Profile() {
                     <option value="unavailable">Unavailable</option>
                   </select>
                 </div>
+                <div>
+                  <label className="label">Work Mode</label>
+                  <select className="input bg-surface-input" value={profile.workMode || 'any'} onChange={e => setProfile({ ...profile, workMode: e.target.value })}>
+                    <option value="any">Any Work Type</option>
+                    <option value="freelance">Freelance (One-time)</option>
+                    <option value="part-time">Part-Time</option>
+                    <option value="full-time">Full-Time</option>
+                  </select>
+                </div>
                 <div><label className="label">Education</label><input className="input" placeholder="e.g. BSc CSIT, TU" value={profile.education || ''} onChange={set('education')} /></div>
                 <div><label className="label">Languages (comma separated)</label><input className="input" placeholder="Nepali, English, Hindi" value={(profile.languages || []).join(', ')} onChange={e => setProfile({ ...profile, languages: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} /></div>
               </div>
@@ -206,6 +216,13 @@ export default function Profile() {
             : <span className="flex items-center gap-2"><Save size={16} />Save Profile</span>}
         </button>
       </form>
+
+      {/* Weekly Schedule — only for providers, outside the main form */}
+      {!isOrg && (
+        <div className="mt-6">
+          <WeeklySchedule initial={profile?.weeklySchedule || []} />
+        </div>
+      )}
     </div>
   );
 }
