@@ -121,26 +121,26 @@ export default function AvailabilityToggle({ current = 'available', workMode = '
 
         {/* Dropdown menu */}
         {open && (
-          <div className="absolute top-full mt-2 left-0 w-52 bg-surface-card border border-surface-border rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-50 overflow-hidden animate-fade-in">
+          <div className="absolute top-full mt-2 left-0 w-52 bg-[#0C1018] border border-white/[0.1] rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.7)] z-[9999] overflow-hidden animate-fade-in">
             <div className="p-1.5">
               {Object.entries(STATUS_CONFIG).map(([key, c]) => (
                 <button
                   key={key}
                   onClick={() => handleChange(key)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
-                    transition-all duration-150 hover:bg-surface-hover
-                    ${status === key ? 'bg-surface-hover' : ''}`}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm
+                    transition-all duration-150 hover:bg-white/[0.06]
+                    ${status === key ? 'bg-white/[0.04]' : ''}`}
                 >
-                  <span className="relative flex h-2.5 w-2.5">
+                  <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                     {c.pulse && status === key && (
                       <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${c.dot} opacity-60`} />
                     )}
                     <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${c.dot}`} />
                   </span>
-                  <span className={status === key ? c.color + ' font-semibold' : 'text-gray-400'}>
+                  <span className={`flex-1 text-left ${status === key ? c.color + ' font-semibold' : 'text-gray-300'}`}>
                     {c.label}
                   </span>
-                  {status === key && <CheckCircle size={13} className={`ml-auto ${c.color}`} />}
+                  {status === key && <CheckCircle size={14} className={c.color} />}
                 </button>
               ))}
             </div>

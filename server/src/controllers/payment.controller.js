@@ -105,16 +105,55 @@ const initiateSubscription = async (req, res) => {
 
 const verifySubscription = async (req, res) => {
   try {
-    const { plan, purchaseOrderId, pidx } = req.body;
+    const { plan, purchaseOrderId, pidx, esewaData } = req.body;
     if (!PLANS[plan]) return res.status(400).json({ message: 'Invalid plan' });
+
+    // Verify Khalti payment
     if (pidx && process.env.KHALTI_SECRET_KEY) {
-      try { const l = await lookupKhalti(pidx); if (l.status !== 'Completed') return res.status(400).json({ message: `Payment ${l.status}` }); } catch (e) { console.warn('[Khalti] Lookup:', e.message); }
+      try {
+        const l = await lookupKhalti(pidx);
+        if (l.status !== 'Completed') return res.status(400).json({ message: `Payment ${l.status}` });
+      } catch (e) { console.warn('[Khalti] Lookup:', e.message); }
     }
-    if (purchaseOrderId) await Payment.findOneAndUpdate({ purchaseOrderId }, { status: 'completed', paymentId: pidx || '' });
+
+    // Verify eSewa payment (decode base64 data param)
+    if (esewaData) {
+      try {
+        const decoded = JSON.parse(Buffer.from(esewaData, 'base64').toString());
+        if (decoded.status !== 'COMPLETE') {
+          return res.status(400).json({ message: `eSewa payment ${decoded.status}` });
+        }
+        // Verify signature
+        const secret = process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
+        const merchantId = process.env.ESEWA_MERCHANT_ID || 'EPAYTEST';
+        const message = `total_amount=${decoded.total_amount},transaction_uuid=${decoded.transaction_uuid},product_code=${merchantId}`;
+        const expectedSig = require('crypto').createHmac('sha256', secret).update(message).digest('base64');
+        if (decoded.signature !== expectedSig) {
+          return res.status(400).json({ message: 'eSewa signature mismatch' });
+        }
+      } catch (e) {
+        console.warn('[eSewa] Verification error:', e.message);
+        // In dev/test mode, allow through
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(400).json({ message: 'eSewa verification failed' });
+        }
+      }
+    }
+
+    if (purchaseOrderId) await Payment.findOneAndUpdate({ purchaseOrderId }, { status: 'completed', paymentId: pidx || esewaData || '' });
     let sub = await Subscription.findOne({ userId: req.user._id });
-    const subData = { plan, startDate: new Date(), endDate: new Date(Date.now()+30*24*60*60*1000), active: true, features: PLANS[plan].features, priceNPR: PLANS[plan].priceNPR, paymentMethod: pidx ? 'khalti' : 'esewa', paymentId: pidx || purchaseOrderId || '' };
-    if (sub) { Object.assign(sub, subData); await sub.save(); } else { sub = await Subscription.create({ userId: req.user._id, ...subData }); }
-    await log(req.user._id, 'subscription_upgrade', { meta: { plan, amount: PLANS[plan].priceNPR } });
+    const gateway = pidx ? 'khalti' : esewaData ? 'esewa' : 'dev';
+    const subData = {
+      plan, startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      active: true, features: PLANS[plan].features,
+      priceNPR: PLANS[plan].priceNPR,
+      paymentMethod: gateway,
+      paymentId: pidx || purchaseOrderId || '',
+    };
+    if (sub) { Object.assign(sub, subData); await sub.save(); }
+    else { sub = await Subscription.create({ userId: req.user._id, ...subData }); }
+    await log(req.user._id, 'subscription_upgrade', { meta: { plan, amount: PLANS[plan].priceNPR, gateway } });
     res.json(sub);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
@@ -141,12 +180,33 @@ const initiateMessageUnlock = async (req, res) => {
 
 const verifyMessageUnlock = async (req, res) => {
   try {
-    const { purchaseOrderId, pidx } = req.body || {};
+    const { purchaseOrderId, pidx, esewaData } = req.body || {};
     const user = await User.findById(req.user._id);
     if (user.messagingUnlocked) return res.json({ message: 'Already unlocked', unlocked: true });
-    if (pidx && process.env.KHALTI_SECRET_KEY) { try { const l = await lookupKhalti(pidx); if (l.status !== 'Completed') return res.status(400).json({ message: `Payment ${l.status}` }); } catch {} }
+
+    if (pidx && process.env.KHALTI_SECRET_KEY) {
+      try {
+        const l = await lookupKhalti(pidx);
+        if (l.status !== 'Completed') return res.status(400).json({ message: `Payment ${l.status}` });
+      } catch {}
+    }
+
+    if (esewaData) {
+      try {
+        const decoded = JSON.parse(Buffer.from(esewaData, 'base64').toString());
+        if (decoded.status !== 'COMPLETE' && process.env.NODE_ENV === 'production') {
+          return res.status(400).json({ message: `eSewa payment ${decoded.status}` });
+        }
+      } catch (e) {
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(400).json({ message: 'eSewa verification failed' });
+        }
+      }
+    }
+
     if (purchaseOrderId) await Payment.findOneAndUpdate({ purchaseOrderId }, { status: 'completed', paymentId: pidx || '' });
-    user.messagingUnlocked = true; await user.save();
+    user.messagingUnlocked = true;
+    await user.save();
     await log(req.user._id, 'messaging_unlocked', { meta: { amount: MESSAGE_UNLOCK_PRICE } });
     res.json({ message: 'Messaging unlocked', unlocked: true });
   } catch (err) { res.status(500).json({ message: err.message }); }

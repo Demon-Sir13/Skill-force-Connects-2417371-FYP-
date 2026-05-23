@@ -79,8 +79,8 @@ export default function ProviderDashboard() {
       </div>
 
       {/* Availability + Current Job Banner */}
-      <div className="card p-4 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1">
+      <div className="card p-4 mb-8 flex flex-col sm:flex-row sm:items-center gap-4 overflow-visible relative z-10">
+        <div className="flex-1 overflow-visible">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Your Status</p>
           <AvailabilityToggle
             current={profile?.availability || 'available'}

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: workforce-backend
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        value: workforce_super_secret_jwt_key_2024
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        value: https://workforce-portal-fyp.vercel.app
+      - key: MONGO_URI
+        sync: false
+      - key: KHALTI_SECRET_KEY
+        value: live_secret_key_68791341fdd94846a146f0457ff7b455
