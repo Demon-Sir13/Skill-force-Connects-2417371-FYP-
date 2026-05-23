@@ -30,6 +30,8 @@ import Subscriptions from './pages/Subscriptions';
 import Contracts from './pages/Contracts';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 const WithSidebar = ({ children }) => (
   <DashboardLayout>{children}</DashboardLayout>
@@ -53,6 +55,10 @@ const AppRoutes = () => (
       {/* Payment return pages */}
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/failure" element={<PaymentFailure />} />
+
+      {/* Auth pages */}
+      <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+      <Route path="/reset-password"  element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
       {/* Authenticated with sidebar */}
       <Route path="/dashboard" element={<PrivateRoute><WithSidebar><Dashboard /></WithSidebar></PrivateRoute>} />

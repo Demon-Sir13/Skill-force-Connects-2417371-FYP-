@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema(
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date },
     trustedDevices: [{ type: String }],
+    passwordResetToken: { type: String },
+    passwordResetExpires: { type: Date },
     trustScore: { type: Number, default: 50, min: 0, max: 100 },
     messageCount: { type: Number, default: 0 },
     messagingUnlocked: { type: Boolean, default: false },

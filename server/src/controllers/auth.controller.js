@@ -186,4 +186,83 @@ const changePassword = async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
-module.exports = { register, login, verifyOtp, resendOtp, getMe, changePassword, refreshTokenHandler };
+// ─── FORGOT PASSWORD ──────────────────────────────────────────────────────────
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email: email?.toLowerCase() });
+    // Always return success to prevent user enumeration
+    if (!user) return res.json({ message: 'If that email exists, a reset link has been sent.' });
+
+    // Generate secure reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    user.passwordResetToken = resetTokenHash;
+    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+    await user.save();
+
+    const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+
+    sendEmail({
+      to: user.email,
+      subject: 'Reset your SkillForce password',
+      html: `
+        <div style="font-family:sans-serif;background:#0B0F14;color:#e2e8f0;padding:40px;max-width:560px;margin:0 auto;border-radius:16px;border:1px solid #1E2530">
+          <div style="text-align:center;margin-bottom:28px">
+            <div style="display:inline-block;background:linear-gradient(135deg,#0EA5E9,#6366F1);padding:12px 24px;border-radius:10px;font-size:18px;font-weight:700;color:#fff">SkillForce</div>
+          </div>
+          <h2 style="color:#F1F5F9;margin-bottom:12px">Reset Your Password</h2>
+          <p style="color:#94a3b8;margin-bottom:24px">Hi <strong style="color:#F1F5F9">${user.name}</strong>, click the button below to reset your password. This link expires in <strong style="color:#F1F5F9">15 minutes</strong>.</p>
+          <div style="text-align:center;margin:32px 0">
+            <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#0EA5E9,#6366F1);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px">Reset Password →</a>
+          </div>
+          <p style="color:#475569;font-size:12px;margin-top:24px">If you didn't request this, ignore this email. Your password won't change.</p>
+          <p style="color:#334155;font-size:11px;margin-top:8px">Link: ${resetUrl}</p>
+        </div>
+      `,
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n🔗 Password reset link for ${user.email}:\n${resetUrl}\n`);
+    }
+
+    res.json({ message: 'If that email exists, a reset link has been sent.' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ─── RESET PASSWORD ───────────────────────────────────────────────────────────
+const resetPassword = async (req, res) => {
+  const { token, email, newPassword } = req.body;
+  try {
+    if (!token || !email || !newPassword)
+      return res.status(400).json({ message: 'Token, email and new password are required' });
+    if (newPassword.length < 6)
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      passwordResetToken: tokenHash,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) return res.status(400).json({ message: 'Reset link is invalid or has expired.' });
+
+    user.password = newPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.refreshToken = ''; // revoke all sessions
+    await user.save();
+
+    sendEmail({
+      to: user.email,
+      subject: 'Your SkillForce password was changed',
+      html: `<div style="font-family:sans-serif;background:#0B0F14;color:#e2e8f0;padding:40px;max-width:560px;margin:0 auto;border-radius:16px;border:1px solid #1E2530"><h2 style="color:#10B981">Password Changed</h2><p style="color:#94a3b8">Hi <strong style="color:#F1F5F9">${user.name}</strong>, your password was successfully changed. If you didn't do this, contact support immediately.</p></div>`,
+    });
+
+    res.json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+module.exports = { register, login, verifyOtp, resendOtp, getMe, changePassword, forgotPassword, resetPassword, refreshTokenHandler };
