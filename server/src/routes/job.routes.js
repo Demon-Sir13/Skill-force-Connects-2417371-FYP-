@@ -4,9 +4,11 @@ const {
   updateJob, deleteJob,
   assignProvider, updateStatus, rateProvider,
   providerUpdateStatus, getEarnings, getRatings,
+  getJobApplicants,
 } = require('../controllers/job.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { validateJob } = require('../middleware/validate.middleware');
+const { checkJobPostLimit } = require('../middleware/subscription.middleware');
 
 // ── Static / named routes first (before /:id) ──────────────────────────────
 router.get('/provider/earnings', protect, authorize('provider'), getEarnings);
@@ -24,12 +26,14 @@ router.get('/',    getJobs);
 router.get('/:id', getJobById);
 
 // ── Organization actions ─────────────────────────────────────────────────────
-router.post('/',              protect, authorize('organization'), validateJob, createJob);
+router.post('/',              protect, authorize('organization'), checkJobPostLimit, validateJob, createJob);
 router.put('/:id',            protect, authorize('organization'), updateJob);
 router.delete('/:id',         protect, authorize('organization'), deleteJob);
 router.put('/:id/assign',     protect, authorize('organization'), assignProvider);
 router.put('/:id/status',     protect, authorize('organization'), updateStatus);
 router.post('/:id/rate',      protect, authorize('organization'), rateProvider);
+// NEW: get only applicants for a job (for assignment dropdown — enforces workflow)
+router.get('/:id/applicants', protect, authorize('organization'), getJobApplicants);
 
 // ── Provider actions ─────────────────────────────────────────────────────────
 router.put('/:id/provider-status', protect, authorize('provider'), providerUpdateStatus);

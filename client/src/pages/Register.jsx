@@ -65,8 +65,9 @@ export default function Register() {
   const isSelected = (r) => form.role === r.value && form.orgType === (r.orgType || '');
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      <div className="absolute inset-0 bg-surface-bg" />
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden"
+      style={{ background: 'var(--bg)' }}>
+      <div className="absolute inset-0" style={{ background: 'var(--bg)' }} />
       <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)' }} />
 

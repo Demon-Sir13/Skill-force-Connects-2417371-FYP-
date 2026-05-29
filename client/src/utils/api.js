@@ -53,7 +53,8 @@ api.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          const { data: tokens } = await axios.post('/api/auth/refresh-token', { refreshToken: user.refreshToken });
+          // Use BASE (not hardcoded /api) so it works in both dev and production
+          const { data: tokens } = await axios.post(`${BASE}/auth/refresh-token`, { refreshToken: user.refreshToken });
           const updated = { ...user, token: tokens.token, refreshToken: tokens.refreshToken };
           localStorage.setItem('wf_user', JSON.stringify(updated));
           processQueue(null, tokens.token);

@@ -9,14 +9,18 @@ const ProviderProfile = require('../models/ProviderProfile');
 
 const getAllUsers = async (req, res) => {
   try {
-    const { role, search, status } = req.query;
+    const { role, search, status, page = 1, limit = 20 } = req.query;
     const filter = {};
     if (role) filter.role = role;
     if (search) filter.name = { $regex: search, $options: 'i' };
     if (status === 'suspended') filter.suspended = true;
     if (status === 'active')    filter.suspended = false;
-    const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
-    res.json(users);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [users, total] = await Promise.all([
+      User.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)),
+      User.countDocuments(filter),
+    ]);
+    res.json({ users, total, page: parseInt(page), totalPages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -84,7 +88,7 @@ const toggleVerification = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     user.verified = !user.verified;
     await user.save();
-    res.json({ message: `User ${user.verified ? 'verified' : 'unverified'}`, user });
+    res.json({ message: `User ${user.verified ? 'verified' : 'unverified'}`, verified: user.verified, user });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -197,7 +201,6 @@ const getStats = async (req, res) => {
     ]);
     const totalRevenue = revenueAgg[0]?.total || 0;
 
-    // Fallback: if no payments yet, estimate from completed jobs
     const jobRevenueAgg = await Job.aggregate([
       { $match: { status: 'completed' } },
       { $group: { _id: null, total: { $sum: '$budget' } } },
@@ -207,6 +210,7 @@ const getStats = async (req, res) => {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
     sixMonthsAgo.setDate(1);
+
     const jobsByMonth = await Job.aggregate([
       { $match: { createdAt: { $gte: sixMonthsAgo } } },
       { $group: {
@@ -227,21 +231,26 @@ const getStats = async (req, res) => {
 
     const suspendedUsers = await User.countDocuments({ suspended: true });
 
-    // Provider verification stats
     const verificationStats = await ProviderProfile.aggregate([
       { $group: { _id: '$verificationStatus', count: { $sum: 1 } } },
     ]);
 
-    // Subscription stats
     const subscriptionStats = await Subscription.aggregate([
       { $match: { active: true } },
       { $group: { _id: '$plan', count: { $sum: 1 } } },
     ]);
 
-    // Application stats
     const totalApplications = await Application.countDocuments();
     const applicationsByStatus = await Application.aggregate([
       { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]);
+
+    const Contract = require('../models/Contract');
+    const [totalContracts, completedContracts, activeContracts, activeProviders] = await Promise.all([
+      Contract.countDocuments(),
+      Contract.countDocuments({ status: 'completed' }),
+      Contract.countDocuments({ status: { $in: ['signed', 'active'] } }),
+      User.countDocuments({ role: 'provider', suspended: false }),
     ]);
 
     res.json({
@@ -250,18 +259,16 @@ const getStats = async (req, res) => {
       pendingReports, totalRevenue: estimatedRevenue, suspendedUsers,
       byRole, jobsByMonth, usersByMonth,
       verificationStats, subscriptionStats, totalApplications, applicationsByStatus,
+      totalContracts, completedContracts, activeContracts, activeProviders,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ─── Activity Logs ────────────────────────────────────────────────────────────
-
 const getAnalytics = async (req, res) => {
   try {
     const Application = require('../models/Application');
-    const Subscription = require('../models/Subscription');
     const Payment = require('../models/Payment');
     const Contract = require('../models/Contract');
 
@@ -293,14 +300,12 @@ const getAnalytics = async (req, res) => {
       ]),
     ]);
 
-    // Top categories
     const topCategories = await Job.aggregate([
       { $group: { _id: '$category', count: { $sum: 1 }, totalBudget: { $sum: '$budget' } } },
       { $sort: { count: -1 } },
       { $limit: 8 },
     ]);
 
-    // Average match score
     const avgMatch = await Application.aggregate([
       { $match: { matchScore: { $gt: 0 } } },
       { $group: { _id: null, avg: { $avg: '$matchScore' } } },
@@ -313,8 +318,6 @@ const getAnalytics = async (req, res) => {
     });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
-
-// ─── Revenue Intelligence ─────────────────────────────────────────────────────
 
 const getRevenue = async (req, res) => {
   try {
@@ -346,14 +349,12 @@ const getRevenue = async (req, res) => {
     const totalRevenue = totalRevenueAgg[0]?.total || 0;
     const conversionRate = totalUsers > 0 ? Math.round((paidUsers / totalUsers) * 100) : 0;
 
-    // Projected monthly revenue = active paid subs × avg plan price
     const subsByPlan = await Subscription.aggregate([
       { $match: { active: true, plan: { $ne: 'free' } } },
       { $group: { _id: '$plan', count: { $sum: 1 }, totalPrice: { $sum: '$priceNPR' } } },
     ]);
     const projectedRevenue = subsByPlan.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
 
-    // Growth: compare last 2 months
     const lastMonth = monthlyRevenue[monthlyRevenue.length - 1]?.revenue || 0;
     const prevMonth = monthlyRevenue[monthlyRevenue.length - 2]?.revenue || 0;
     const growthPct = prevMonth > 0 ? Math.round(((lastMonth - prevMonth) / prevMonth) * 100) : 0;
@@ -392,7 +393,6 @@ const updateProviderVerification = async (req, res) => {
     if (!profile) return res.status(404).json({ message: 'Provider profile not found' });
     profile.verificationStatus = status;
     await profile.save();
-    // Also toggle user verified flag
     if (status === 'approved') await User.findByIdAndUpdate(req.params.id, { verified: true });
     if (status === 'rejected') await User.findByIdAndUpdate(req.params.id, { verified: false });
     res.json({ message: `Provider verification: ${status}`, profile });

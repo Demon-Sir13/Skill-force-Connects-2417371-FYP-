@@ -4,6 +4,7 @@ const Notification = require('../models/Notification');
 const Contract = require('../models/Contract');
 const ProviderProfile = require('../models/ProviderProfile');
 const { calculateMatchScore, profileCompleteness, calculateResumeScore, predictSuccess } = require('../utils/matchScore');
+const { incrementApplicationCount } = require('../middleware/subscription.middleware');
 
 // Helper: emit socket event if available
 const emitTo = (userId, event, data) => {
@@ -28,7 +29,15 @@ const applyToJob = async (req, res) => {
       providerId: req.user._id,
       organizationId: job.organizationId,
       coverLetter: coverLetter.trim(),
-      cvFile: cvFile || '',
+      cvFile: req.files?.resume?.[0]
+        ? `/uploads/applications/${req.files.resume[0].filename}`
+        : (cvFile || ''),
+      citizenshipDoc: req.files?.citizenship?.[0]
+        ? `/uploads/applications/${req.files.citizenship[0].filename}`
+        : '',
+      certificateDoc: req.files?.certificate?.[0]
+        ? `/uploads/applications/${req.files.certificate[0].filename}`
+        : '',
       portfolioFiles: portfolioFiles || [],
       portfolioLink: portfolioLink || '',
       expectedSalary: expectedSalary || 0,
@@ -56,6 +65,9 @@ const applyToJob = async (req, res) => {
 
     job.applicantCount = (job.applicantCount || 0) + 1;
     await job.save();
+
+    // Increment monthly application counter for this provider
+    await incrementApplicationCount(req.user._id);
 
     // Notify org + socket
     await Notification.create({

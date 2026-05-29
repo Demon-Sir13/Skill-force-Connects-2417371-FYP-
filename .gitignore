@@ -53,3 +53,7 @@ coverage/
 
 # Local MongoDB
 data/
+
+# Uploaded files (local dev only — use Cloudinary in production)
+server/uploads/
+uploads/

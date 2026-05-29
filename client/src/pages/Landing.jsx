@@ -42,15 +42,21 @@ function TypingText() {
 
   useEffect(() => {
     const word = words[index];
-    const timeout = setTimeout(() => {
-      if (!deleting) {
-        setText(word.slice(0, text.length + 1));
-        if (text.length + 1 === word.length) setTimeout(() => setDeleting(true), 1500);
+    let timeout;
+    if (!deleting) {
+      if (text.length < word.length) {
+        timeout = setTimeout(() => setText(word.slice(0, text.length + 1)), 100);
       } else {
-        setText(word.slice(0, text.length - 1));
-        if (text.length === 0) { setDeleting(false); setIndex((index + 1) % words.length); }
+        timeout = setTimeout(() => setDeleting(true), 1500);
       }
-    }, deleting ? 50 : 100);
+    } else {
+      if (text.length > 0) {
+        timeout = setTimeout(() => setText(word.slice(0, text.length - 1)), 50);
+      } else {
+        setDeleting(false);
+        setIndex((i) => (i + 1) % words.length);
+      }
+    }
     return () => clearTimeout(timeout);
   }, [text, deleting, index]);
 
@@ -111,9 +117,8 @@ export default function Landing() {
         <div className="absolute inset-0 opacity-[0.015] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
-        {/* Floating glass cards */}
-        <motion.div animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-[18%] left-[8%] hidden xl:block z-10">
+        {/* Floating glass cards — CSS animations, no JS timers */}
+        <div className="absolute top-[18%] left-[8%] hidden xl:block z-10 animate-float">
           <div className="glass-card p-4 pr-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -126,10 +131,9 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div animate={{ y: [8, -8, 8] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-[28%] right-[6%] hidden xl:block z-10">
+        <div className="absolute top-[28%] right-[6%] hidden xl:block z-10 animate-float-delayed">
           <div className="glass-card p-4 pr-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center">
@@ -141,10 +145,9 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div animate={{ y: [-6, 10, -6] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-[22%] left-[12%] hidden xl:block z-10">
+        <div className="absolute bottom-[22%] left-[12%] hidden xl:block z-10 animate-float-slow">
           <div className="glass-card p-3 px-4">
             <div className="flex items-center gap-2">
               <MapPin size={12} className="text-brand-blue" />
@@ -152,10 +155,9 @@ export default function Landing() {
               <span className="text-[11px] text-emerald-400">• 340 online</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div animate={{ y: [6, -10, 6] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-[30%] right-[10%] hidden xl:block z-10">
+        <div className="absolute bottom-[30%] right-[10%] hidden xl:block z-10 animate-float">
           <div className="glass-card p-3 px-4">
             <div className="flex items-center gap-2">
               <div className="flex -space-x-1.5">
@@ -166,7 +168,7 @@ export default function Landing() {
               <span className="text-[11px] text-gray-400">+2.4k hired this week</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Hero content */}
         <motion.div initial="hidden" animate="visible" variants={stagger} className="relative max-w-5xl mx-auto text-center px-4 z-10">
@@ -464,6 +466,133 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── NEPAL MARKET GAP ── */}
+      <section className="py-24 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-mesh pointer-events-none opacity-40" />
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
+            <motion.p variants={fadeUp} className="text-red-400/70 text-xs font-semibold uppercase tracking-[0.2em] mb-3">The Problem</motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-bold text-white mb-4">Nepal's Workforce Crisis</motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">
+              Over 4 million Nepali workers operate in the informal economy — no contracts, no trust, no digital trail. Hiring is broken.
+            </motion.p>
+          </motion.div>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+            {[
+              { icon: '🏚️', stat: '76%', label: 'Informal Labor', desc: 'Of Nepal\'s workforce operates without formal contracts, leaving both workers and employers unprotected.' },
+              { icon: '🤝', stat: '68%', label: 'Trust Gap', desc: 'Organizations report difficulty verifying provider credentials, leading to costly mis-hires and project failures.' },
+              { icon: '📱', stat: '12M+', label: 'Undigitized Workers', desc: 'Skilled workers — electricians, nurses, designers — have no digital presence to showcase their expertise.' },
+              { icon: '💸', stat: '₨40B+', label: 'Lost Productivity', desc: 'Estimated annual economic loss from inefficient hiring, middlemen fees, and unverified workforce placement.' },
+              { icon: '🌐', stat: '3%', label: 'Online Hiring Rate', desc: 'Only 3% of Nepali hiring happens through digital platforms. The rest relies on word-of-mouth and brokers.' },
+              { icon: '📈', stat: '28%', label: 'Gig Economy Growth', desc: 'Nepal\'s gig economy is growing at 28% annually — but has no trusted platform to support it.' },
+            ].map(({ icon, stat, label, desc }) => (
+              <motion.div key={label} variants={fadeUp}
+                className="card p-6 flex flex-col gap-3 group hover:border-red-500/20 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{icon}</span>
+                  <div>
+                    <p className="text-2xl font-extrabold text-red-400">{stat}</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* The 5 core problems */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}
+            className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+            {[
+              { num: '01', title: 'Informal Labor Market', desc: 'No contracts, no accountability, no recourse when things go wrong.' },
+              { num: '02', title: 'Trust Issues in Hiring', desc: 'Fake credentials, unverified skills, and zero background checks.' },
+              { num: '03', title: 'No Digital Identity', desc: 'Workers have no portfolio, no rating, no proof of past work.' },
+              { num: '04', title: 'Payment Insecurity', desc: 'Cash-only transactions with no escrow, no receipts, no protection.' },
+              { num: '05', title: 'Workforce Fragmentation', desc: 'Talent is scattered across districts with no central discovery layer.' },
+            ].map(({ num, title, desc }) => (
+              <motion.div key={num} variants={fadeUp}
+                className="card p-5 border-t-2 border-t-red-500/30 hover:border-t-red-400/60 transition-all duration-300">
+                <p className="text-red-400/40 text-xs font-mono mb-2">{num}</p>
+                <p className="text-white font-semibold text-sm mb-2">{title}</p>
+                <p className="text-gray-600 text-xs leading-relaxed">{desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── SKILLFORCE SOLUTION ── */}
+      <section className="py-24 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-[700px] h-[700px] rounded-full opacity-20 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 60%)' }} />
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
+            <motion.p variants={fadeUp} className="text-emerald-400/70 text-xs font-semibold uppercase tracking-[0.2em] mb-3">The Solution</motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-bold text-white mb-4">Why SkillForce Fits Nepal</motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">
+              Built ground-up for Nepal's unique market — NPR payments, local trust systems, district-level coverage, and Nepali-first UX.
+            </motion.p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-16">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="space-y-4">
+              {[
+                { icon: '🇳🇵', title: 'Built for Nepal', desc: 'NPR pricing, Khalti & eSewa payments, Nepali districts, local categories like security guards, nurses, and electricians.' },
+                { icon: '🛡️', title: 'Trust Infrastructure', desc: 'Verified badges, trust scores, digital contracts with signatures, and application-based hiring prevent fraud.' },
+                { icon: '📋', title: 'Formal Work Contracts', desc: 'Auto-generated contracts with digital signatures bring formality to informal work — protecting both parties.' },
+                { icon: '💳', title: 'NPR Payment Rails', desc: 'Khalti and eSewa integration means workers get paid digitally, creating a financial trail and reducing cash dependency.' },
+                { icon: '🤖', title: 'AI-Powered Matching', desc: 'Smart matching scores providers against job requirements — reducing mis-hires and saving organizations time.' },
+              ].map(({ icon, title, desc }) => (
+                <motion.div key={title} variants={fadeUp}
+                  className="flex gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-emerald-500/20 transition-all duration-300 group">
+                  <span className="text-xl shrink-0 mt-0.5">{icon}</span>
+                  <div>
+                    <p className="text-white font-semibold text-sm mb-1 group-hover:text-emerald-400 transition-colors">{title}</p>
+                    <p className="text-gray-500 text-xs leading-relaxed">{desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn} transition={{ duration: 0.7 }}>
+              <div className="card p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 to-emerald-500/5 pointer-events-none" />
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-5">Product-Market Fit Score</p>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Nepal Market Fit',       pct: 94, color: 'bg-emerald-500' },
+                    { label: 'NPR Payment Adoption',   pct: 88, color: 'bg-brand-blue' },
+                    { label: 'Trust System Demand',    pct: 91, color: 'bg-brand-indigo' },
+                    { label: 'Gig Economy Readiness',  pct: 79, color: 'bg-yellow-500' },
+                    { label: 'Digital Workforce Gap',  pct: 96, color: 'bg-red-400' },
+                  ].map(({ label, pct, color }) => (
+                    <div key={label}>
+                      <div className="flex justify-between mb-1.5">
+                        <span className="text-xs text-gray-400">{label}</span>
+                        <span className="text-xs font-bold text-white">{pct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-surface-border overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${pct}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1.2, ease: 'easeOut' }}
+                          className={`h-full rounded-full ${color}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 pt-4 border-t border-white/[0.04]">
+                  <p className="text-xs text-gray-600 text-center">Based on Nepal Labor Force Survey 2023 + ILO data</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA ── */}
       <section className="py-24 px-4">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} transition={{ duration: 0.7 }}
@@ -518,7 +647,13 @@ export default function Landing() {
             <div>
               <p className="text-gray-400 font-medium text-sm mb-3">Company</p>
               <div className="flex flex-col gap-2">
-                {['About', 'Privacy', 'Terms'].map(l => (
+                {[
+                  { to: '/about', label: 'About' },
+                  { to: '/investor', label: 'Investor Deck' },
+                ].map(l => (
+                  <Link key={l.to} to={l.to} className="text-gray-600 text-sm hover:text-gray-400 transition-colors">{l.label}</Link>
+                ))}
+                {['Privacy', 'Terms'].map(l => (
                   <span key={l} className="text-gray-600 text-sm">{l}</span>
                 ))}
               </div>

@@ -10,9 +10,11 @@ export const AuthProvider = ({ children }) => {
   const [otpState, setOtpState] = useState(null); // { userId, email }
 
   useEffect(() => {
-    const stored = localStorage.getItem('wf_user');
+    let stored;
+    try { stored = localStorage.getItem('wf_user'); } catch { setLoading(false); return; }
     if (!stored) { setLoading(false); return; }
-    const parsed = JSON.parse(stored);
+    let parsed;
+    try { parsed = JSON.parse(stored); } catch { localStorage.removeItem('wf_user'); setLoading(false); return; }
     setUser(parsed);
     api.get('/auth/me')
       .then(({ data }) => {
@@ -20,7 +22,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('wf_user', JSON.stringify(refreshed));
         setUser(refreshed);
       })
-      .catch(() => { localStorage.removeItem('wf_user'); setUser(null); })
+      .catch((err) => {
+        // Only clear session on explicit 401 — not on network errors or server being slow
+        if (err.response?.status === 401) {
+          localStorage.removeItem('wf_user');
+          setUser(null);
+        }
+        // Otherwise keep the stored user so refresh doesn't log them out
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -72,10 +81,14 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('wf_user');
-    setUser(null);
-    setOtpState(null);
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/auth/logout').catch(() => {}); // best-effort
+    } finally {
+      localStorage.removeItem('wf_user');
+      setUser(null);
+      setOtpState(null);
+    }
   }, []);
 
   const changePassword = async (currentPassword, newPassword) => {

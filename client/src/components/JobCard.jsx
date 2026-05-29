@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { DollarSign, Calendar, Tag, ArrowRight, Clock, MapPin, Zap, Users } from 'lucide-react';
+import { DollarSign, Calendar, Tag, ArrowRight, Clock, MapPin, Zap, Users, Crown } from 'lucide-react';
 import Avatar from './Avatar';
 
 const statusMap = {
@@ -54,6 +54,11 @@ export default function JobCard({ job }) {
             <span className={`w-1.5 h-1.5 rounded-full ${s.dot} inline-block`} />
             {s.label}
           </span>
+          {job.featured && (
+            <span className="shrink-0 flex items-center gap-1 text-[9px] font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded-full">
+              <Crown size={9} />FEATURED
+            </span>
+          )}
         </div>
 
         {/* Description */}

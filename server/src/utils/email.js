@@ -6,18 +6,38 @@ let transporter = null;
 
 const getTransporter = () => {
   if (transporter) return transporter;
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  });
-  transporter.verify()
-    .then(() => console.log('[Email] Gmail SMTP connected'))
-    .catch((err) => console.error('[Email] Gmail SMTP verification failed:', err.message));
-  return transporter;
+
+  // Gmail SMTP (primary)
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    });
+    transporter.verify()
+      .then(() => console.log('[Email] Gmail SMTP connected'))
+      .catch((err) => {
+        console.error('[Email] Gmail SMTP verification failed:', err.message);
+        transporter = null; // reset so next call retries
+      });
+    return transporter;
+  }
+
+  // Mailtrap fallback (for staging/testing with real SMTP but no real delivery)
+  if (process.env.MAILTRAP_USER && process.env.MAILTRAP_PASS) {
+    transporter = nodemailer.createTransport({
+      host: 'sandbox.smtp.mailtrap.io',
+      port: 2525,
+      auth: { user: process.env.MAILTRAP_USER, pass: process.env.MAILTRAP_PASS },
+    });
+    console.log('[Email] Using Mailtrap SMTP');
+    return transporter;
+  }
+
+  return null;
 };
 
 const sendEmail = async ({ to, subject, html, _otpCode }) => {
+  // Development mode — print to terminal, skip real sending
   if (isDev) {
     console.log('\n╔══════════════════════════════════════════════════╗');
     console.log('║           📧  DEV EMAIL (not sent)               ║');
@@ -31,20 +51,27 @@ const sendEmail = async ({ to, subject, html, _otpCode }) => {
     console.log('╚══════════════════════════════════════════════════╝\n');
     return;
   }
+
+  // Production mode — send real email
   const t = getTransporter();
   if (!t) {
-    console.warn('[Email] Skipped — EMAIL_USER/EMAIL_PASS not configured');
-    if (_otpCode) console.log(`[Email] OTP fallback for ${to}: ${_otpCode}`);
+    // No email configured — log OTP as last resort so login still works
+    console.warn('[Email] No SMTP configured. Set EMAIL_USER + EMAIL_PASS in environment.');
+    if (_otpCode) console.log(`[Email] ⚠️  OTP for ${to}: ${_otpCode}`);
     return;
   }
+
   try {
     const info = await t.sendMail({
-      from: process.env.EMAIL_FROM || `SkillForce <${process.env.EMAIL_USER}>`,
-      to, subject, html,
+      from: process.env.EMAIL_FROM || `SkillForce Nepal <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
     });
     console.log(`[Email] Sent to ${to} — messageId: ${info.messageId}`);
   } catch (err) {
     console.error(`[Email] Failed to send to ${to}:`, err.message);
+    // Always log OTP as fallback so auth is never completely broken
     if (_otpCode) console.log(`[Email] ⚠️  OTP fallback for ${to}: ${_otpCode}`);
   }
 };

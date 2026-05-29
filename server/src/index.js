@@ -23,6 +23,9 @@ dotenv.config();
 const app = express();
 const httpServer = http.createServer(app);
 
+// Trust proxy — required for correct IP detection and HTTPS behind Render/Railway/Vercel
+app.set('trust proxy', 1);
+
 // Init socket (wrapped in try/catch for safety)
 try {
   const { initSocket } = require('./socket/socket');
@@ -34,7 +37,18 @@ try {
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+      connectSrc: ["'self'", 'https://a.khalti.com', 'https://rc-epay.esewa.com.np', 'https://epay.esewa.com.np'],
+      fontSrc: ["'self'", 'https:', 'data:'],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
 }));
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
@@ -48,6 +62,27 @@ app.use(cors({
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ── XSS sanitization for string body fields ───────────────────────────────────
+app.use((req, _res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    const sanitizeStr = (str) => typeof str === 'string'
+      ? str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+           .replace(/javascript:/gi, '')
+           .replace(/on\w+\s*=/gi, '')
+      : str;
+    const sanitizeObj = (obj) => {
+      if (typeof obj === 'string') return sanitizeStr(obj);
+      if (Array.isArray(obj)) return obj.map(sanitizeObj);
+      if (obj && typeof obj === 'object') {
+        return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, sanitizeObj(v)]));
+      }
+      return obj;
+    };
+    req.body = sanitizeObj(req.body);
+  }
+  next();
+});
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const path = require('path');
@@ -76,6 +111,8 @@ app.use('/api/auth/login',    authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/verify-otp', authLimiter);
 app.use('/api/auth/resend-otp', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password',  authLimiter);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/auth.routes'));
@@ -93,8 +130,9 @@ app.use('/api/reviews',       require('./routes/review.routes'));
 app.use('/api/contracts',     require('./routes/contract.routes'));
 app.use('/api/matching',      require('./routes/matching.routes'));
 app.use('/api/work-updates', require('./routes/workupdate.routes'));
-
-app.use('/api/payments', require('./routes/payment.routes'));
+app.use('/api/delivery',     require('./routes/delivery.routes'));
+app.use('/api/payments',     require('./routes/payment.routes'));
+app.use('/api/esewa',        require('./routes/esewa.routes'));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/', (_req, res) => res.json({ message: 'SkillForce API running', status: 'ok' }));
@@ -117,7 +155,12 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('[DB] Failed to connect:', err.message);
+    process.exit(1);
+  }
 
   // Auto-seed if database is empty
   try {
@@ -127,7 +170,7 @@ const startServer = async () => {
     console.warn('[Seed] Skipped:', err.message);
   }
 
-  httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  httpServer.listen(PORT, () => console.log(`✅ Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`));
 };
 
 startServer();

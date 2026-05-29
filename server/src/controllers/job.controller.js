@@ -1,5 +1,6 @@
 const Job = require('../models/Job');
 const ProviderProfile = require('../models/ProviderProfile');
+const { incrementJobPostCount } = require('../middleware/subscription.middleware');
 
 const createJob = async (req, res) => {
   try {
@@ -32,6 +33,10 @@ const createJob = async (req, res) => {
       skillsRequired: skillsRequired || [],
       organizationId: req.user._id,
     });
+
+    // Increment monthly job post counter
+    await incrementJobPostCount(req.user._id);
+
     res.status(201).json(job);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -92,7 +97,20 @@ const updateJob = async (req, res) => {
     if (job.organizationId.toString() !== req.user._id.toString())
       return res.status(403).json({ message: 'Not authorized' });
 
-    const updated = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { title, description, category, budget, deadline, location, district, skillsRequired, urgency, jobType } = req.body;
+    const updates = {};
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (category !== undefined) updates.category = category;
+    if (budget !== undefined) updates.budget = budget;
+    if (deadline !== undefined) updates.deadline = deadline;
+    if (location !== undefined) updates.location = location;
+    if (district !== undefined) updates.district = district;
+    if (skillsRequired !== undefined) updates.skillsRequired = skillsRequired;
+    if (urgency !== undefined) updates.urgency = urgency;
+    if (jobType !== undefined) updates.jobType = jobType;
+
+    const updated = await Job.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -114,9 +132,12 @@ const deleteJob = async (req, res) => {
 };
 
 // @PUT /api/jobs/:id/assign  — org assigns a provider
+// STRICT VALIDATION: provider MUST have an approved application for this job
 const assignProvider = async (req, res) => {
   try {
-    const { providerId } = req.body;
+    const { providerId, applicationId } = req.body;
+    const Application = require('../models/Application');
+
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: 'Job not found' });
     if (job.organizationId.toString() !== req.user._id.toString())
@@ -124,9 +145,33 @@ const assignProvider = async (req, res) => {
     if (job.status !== 'open')
       return res.status(400).json({ message: 'Can only assign to open jobs' });
 
+    // CRITICAL: Verify provider actually applied to this specific job
+    const application = await Application.findOne({
+      jobId: job._id,
+      providerId,
+      status: { $in: ['approved', 'shortlisted', 'interview'] },
+    });
+
+    if (!application) {
+      return res.status(403).json({
+        message: 'Cannot assign this provider — they must have an approved application for this job first.',
+        code: 'PROVIDER_NOT_APPLICANT',
+      });
+    }
+
+    // Mark application as contracted
+    application.status = 'contracted';
+    await application.save();
+
     job.assignedProviderId = providerId;
     job.status = 'in-progress';
     await job.save();
+
+    // Set provider to busy
+    await ProviderProfile.findOneAndUpdate(
+      { userId: providerId },
+      { availability: 'busy', currentJobId: job._id }
+    );
 
     const updated = await Job.findById(job._id)
       .populate('organizationId', 'name profileImage')
@@ -290,4 +335,27 @@ module.exports = {
   createJob, getJobs, getJobById, updateJob, deleteJob,
   assignProvider, updateStatus, rateProvider,
   providerUpdateStatus, getEarnings, getRatings,
+  getJobApplicants,
 };
+
+// @GET /api/jobs/:id/applicants — org gets list of providers who applied (for assignment dropdown)
+async function getJobApplicants(req, res) {
+  try {
+    const Application = require('../models/Application');
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+    if (job.organizationId.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: 'Not authorized' });
+
+    const apps = await Application.find({
+      jobId: job._id,
+      status: { $in: ['pending', 'shortlisted', 'interview', 'approved'] },
+    })
+      .populate('providerId', 'name email profileImage verified trustScore')
+      .sort({ matchScore: -1 });
+
+    res.json(apps);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}

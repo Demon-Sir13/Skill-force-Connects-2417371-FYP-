@@ -1,74 +1,81 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { CheckCircle, ArrowRight, XCircle, Loader2, Zap } from 'lucide-react';
+import { CheckCircle, ArrowRight, XCircle, Loader2, Zap, Receipt } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PaymentSuccess() {
-  const [params] = useSearchParams();
-  const [status, setStatus] = useState('processing');
-  const [detail, setDetail] = useState('');
+  const [params]  = useSearchParams();
+  const [status, setStatus]   = useState('processing');
+  const [detail, setDetail]   = useState('');
+  const verified = useRef(false); // prevent double-fire in StrictMode
 
-  // Our params (from return_url we set)
-  const type = params.get('type');
-  const plan = params.get('plan');
+  // Params we set in return_url
+  const type    = params.get('type');
+  const plan    = params.get('plan');
   const orderId = params.get('order_id') || params.get('purchase_order_id');
 
-  // Khalti appends these
-  const pidx = params.get('pidx');
+  // Khalti appends these on redirect
+  const pidx         = params.get('pidx');
   const khaltiStatus = params.get('status');
-  const amount = params.get('amount') || params.get('total_amount');
+  const amount       = params.get('amount') || params.get('total_amount');
 
-  // eSewa appends base64 encoded `data` param
+  // eSewa appends base64-encoded `data` param
   const esewaData = params.get('data');
 
   useEffect(() => {
+    if (verified.current) return;
+    verified.current = true;
+
     const verify = async () => {
       try {
-        // Decode eSewa data if present
-        let esewaDecoded = null;
-        if (esewaData) {
-          try {
-            esewaDecoded = JSON.parse(atob(esewaData));
-          } catch {
-            esewaDecoded = null;
-          }
+        // Khalti: if status param says Completed, proceed; otherwise fail early
+        if (pidx && khaltiStatus && khaltiStatus !== 'Completed') {
+          setStatus('failed');
+          setDetail(`Khalti payment status: ${khaltiStatus}. No charges were made.`);
+          return;
         }
 
         if (type === 'subscription' && plan) {
           await api.post('/payments/verify-subscription', {
             plan,
-            purchaseOrderId: orderId || esewaDecoded?.transaction_uuid,
-            pidx,
+            purchaseOrderId: orderId,
+            pidx:      pidx      || null,
             esewaData: esewaData || null,
           });
-          setDetail(`Your ${plan} plan is now active.`);
+          setDetail(`Your ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active.`);
           toast.success(`Upgraded to ${plan} plan!`);
+
         } else if (type === 'messaging') {
           await api.post('/payments/verify-messaging', {
-            purchaseOrderId: orderId || esewaDecoded?.transaction_uuid,
-            pidx,
+            purchaseOrderId: orderId,
+            pidx:      pidx      || null,
             esewaData: esewaData || null,
           });
           setDetail('Unlimited messaging has been unlocked.');
           toast.success('Messaging unlocked!');
+
         } else {
-          // Unknown type — still mark success
           setDetail('Your payment was processed successfully.');
         }
+
         setStatus('success');
       } catch (err) {
         setStatus('failed');
-        setDetail(err.response?.data?.message || 'Payment verification failed.');
+        setDetail(err.response?.data?.message || 'Payment verification failed. Please contact support.');
       }
     };
+
     verify();
   }, []);
 
+  // Display amount — Khalti sends paisa, eSewa sends NPR
   const amountDisplay = amount
     ? `₨${(Number(amount) / (pidx ? 100 : 1)).toLocaleString()}`
     : null;
+
+  const gateway = pidx ? 'Khalti' : esewaData ? 'eSewa' : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-hero">
@@ -86,16 +93,18 @@ export default function PaymentSuccess() {
           <span className="font-bold text-white">Skill<span className="gradient-text">Force</span></span>
         </div>
 
+        {/* Processing */}
         {status === 'processing' && (
           <>
             <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-5">
               <Loader2 size={28} className="text-brand-blue animate-spin" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Verifying Payment</h2>
-            <p className="text-gray-500 text-sm">Please wait while we confirm your payment...</p>
+            <p className="text-gray-500 text-sm">Please wait while we confirm your payment with {gateway || 'the gateway'}...</p>
           </>
         )}
 
+        {/* Success */}
         {status === 'success' && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-5">
@@ -104,29 +113,30 @@ export default function PaymentSuccess() {
             <h2 className="text-xl font-bold text-white mb-2">Payment Successful!</h2>
             <p className="text-gray-400 text-sm mb-2">{detail}</p>
             {amountDisplay && (
-              <p className="text-emerald-400 text-sm font-semibold mb-6">
-                {amountDisplay} paid {pidx ? 'via Khalti' : 'via eSewa'}
+              <p className="text-emerald-400 text-sm font-semibold mb-2">
+                {amountDisplay} paid{gateway ? ` via ${gateway}` : ''}
               </p>
             )}
-            <div className="flex gap-3 justify-center mt-6">
+            <div className="flex gap-3 justify-center mt-6 flex-wrap">
               <Link to="/dashboard" className="btn-primary inline-flex items-center gap-2">
                 Go to Dashboard <ArrowRight size={16} />
               </Link>
-              <Link to="/subscriptions" className="btn-ghost inline-flex items-center gap-2">
-                View Plans
+              <Link to="/payment-history" className="btn-ghost inline-flex items-center gap-2">
+                <Receipt size={14} />Billing History
               </Link>
             </div>
           </motion.div>
         )}
 
+        {/* Failed */}
         {status === 'failed' && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-5">
               <XCircle size={32} className="text-red-400" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Verification Failed</h2>
-            <p className="text-gray-400 text-sm mb-6">{detail || 'Payment could not be verified. Please contact support.'}</p>
-            <div className="flex gap-3 justify-center">
+            <p className="text-gray-400 text-sm mb-6">{detail}</p>
+            <div className="flex gap-3 justify-center flex-wrap">
               <Link to="/subscriptions" className="btn-primary inline-flex items-center gap-2">
                 Try Again <ArrowRight size={16} />
               </Link>

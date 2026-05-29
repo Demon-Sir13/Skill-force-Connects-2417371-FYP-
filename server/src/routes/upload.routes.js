@@ -5,7 +5,11 @@ const User = require('../models/User');
 const OrganizationProfile = require('../models/OrganizationProfile');
 const ProviderProfile = require('../models/ProviderProfile');
 
-const fileUrl = (req, file) => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+const fileUrl = (req, file) => {
+  // In production behind a reverse proxy, build URL from env var
+  const base = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
+  return `${base}/uploads/${file.filename}`;
+};
 
 router.post('/avatar', protect, upload.single('image'), async (req, res) => {
   try {

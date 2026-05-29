@@ -83,6 +83,104 @@ function ReportModal({ report, onClose, onUpdate }) {
 
 const TABS = ['Overview', 'Users', 'Jobs', 'Verification', 'Reports', 'Activity'];
 
+function VerificationRow({ user: u, onApprove, onReject, onVerify, onSkillScore }) {
+  const [score, setScore] = useState('');
+  const [docProfile, setDocProfile] = useState(null);
+
+  useEffect(() => {
+    api.get(`/providers/${u._id}`)
+      .then(({ data }) => setDocProfile(data))
+      .catch(() => {});
+  }, [u._id]);
+
+  const docStatus = docProfile?.verificationStatus || 'unverified';
+  const hasDocs = docProfile?.citizenshipDoc || docProfile?.certificateDoc;
+
+  return (
+    <tr className="border-b border-surface-border/50 hover:bg-surface-hover transition-colors">
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-3">
+          <Avatar src={u.profileImage} name={u.name} size="sm" />
+          <div>
+            <p className="font-medium text-white">{u.name}</p>
+            {docProfile?.skillVerified && (
+              <span className="text-[9px] text-purple-400">⚡ Skill Verified</span>
+            )}
+          </div>
+        </div>
+      </td>
+      <td className="px-5 py-3.5 text-gray-400 text-xs">{u.email}</td>
+      <td className="px-5 py-3.5">
+        <span className={`${
+          docStatus === 'approved' ? 'badge-green' :
+          docStatus === 'pending' ? 'badge-yellow' :
+          docStatus === 'rejected' ? 'badge-red' : 'badge-gray'
+        } capitalize`}>{docStatus}</span>
+      </td>
+      <td className="px-5 py-3.5">
+        {u.verified
+          ? <span className="badge-green flex items-center gap-1 w-fit"><BadgeCheck size={10} />Verified</span>
+          : <span className="badge-gray">Unverified</span>}
+      </td>
+      <td className="px-5 py-3.5">
+        {hasDocs ? (
+          <div className="flex gap-1.5">
+            {docProfile.citizenshipDoc && (
+              <a href={docProfile.citizenshipDoc} target="_blank" rel="noreferrer"
+                className="text-[10px] px-2 py-1 rounded bg-brand-blue/10 text-brand-blue hover:bg-brand-blue/20">
+                🪪 ID
+              </a>
+            )}
+            {docProfile.certificateDoc && (
+              <a href={docProfile.certificateDoc} target="_blank" rel="noreferrer"
+                className="text-[10px] px-2 py-1 rounded bg-purple-500/10 text-purple-400 hover:bg-purple-500/20">
+                📜 Cert
+              </a>
+            )}
+          </div>
+        ) : (
+          <span className="text-[10px] text-gray-600">No docs</span>
+        )}
+      </td>
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number" min="0" max="100"
+            placeholder="0-100"
+            value={score}
+            onChange={e => setScore(e.target.value)}
+            className="w-16 text-xs px-2 py-1 rounded-lg bg-surface-hover border border-surface-border text-white focus:outline-none focus:border-brand-blue/50"
+          />
+          <button
+            onClick={() => { if (score) { onSkillScore(Number(score)); setScore(''); } }}
+            className="text-[10px] px-2 py-1 rounded bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+          >Set</button>
+          {docProfile?.skillScore > 0 && (
+            <span className="text-[10px] text-purple-400 font-bold">{docProfile.skillScore}%</span>
+          )}
+        </div>
+      </td>
+      <td className="px-5 py-3.5">
+        <div className="flex gap-1.5 flex-wrap">
+          {docStatus === 'pending' && (
+            <>
+              <button onClick={onApprove} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-green-500/10 text-green-400 hover:bg-green-500/20">
+                <CheckCircle size={10} />Approve Docs
+              </button>
+              <button onClick={onReject} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20">
+                <XCircle size={10} />Reject
+              </button>
+            </>
+          )}
+          <button onClick={onVerify} className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${u.verified ? 'bg-brand-blue/10 text-brand-blue hover:bg-brand-blue/20' : 'bg-surface-hover text-gray-400 hover:text-white'}`}>
+            <BadgeCheck size={10} />{u.verified ? 'Verified' : 'Verify'}
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function AdminDashboard() {
   const [tab, setTab] = useState('Overview');
   const [stats, setStats] = useState(null);
@@ -111,7 +209,7 @@ export default function AdminDashboard() {
     if (userSearch) params.search = userSearch;
     if (roleFilter) params.role = roleFilter;
     if (statusFilter) params.status = statusFilter;
-    api.get('/admin/users', { params }).then(({ data }) => setUsers(data)).catch(() => {});
+    api.get('/admin/users', { params }).then(({ data }) => setUsers(data.users || data)).catch(() => {});
   }, [userSearch, roleFilter, statusFilter]);
 
   const fetchJobs = useCallback(() => {
@@ -496,39 +594,49 @@ export default function AdminDashboard() {
 
       {/* VERIFICATION TAB */}
       {tab === 'Verification' && (
-        <div className="card overflow-hidden p-0">
-          <div className="p-5 border-b border-surface-border">
-            <p className="text-sm font-semibold text-white flex items-center gap-2"><ShieldCheck size={14} className="text-brand-blue" />Provider Verification Management</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-surface-border">
-                {['Provider', 'Email', 'Verified', 'Actions'].map(h => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {users.filter(u => u.role === 'provider').map(u => (
-                  <tr key={u._id} className="border-b border-surface-border/50 hover:bg-surface-hover transition-colors">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <Avatar src={u.profileImage} name={u.name} size="sm" />
-                        <p className="font-medium text-white">{u.name}</p>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-400 text-xs">{u.email}</td>
-                    <td className="px-5 py-3.5">{u.verified ? <span className="badge-green">Verified</span> : <span className="badge-yellow">Pending</span>}</td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex gap-2">
-                        <button onClick={() => handleProviderVerification(u._id, 'approved')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-green-500/10 text-green-400 hover:bg-green-500/20"><CheckCircle size={11} />Approve</button>
-                        <button onClick={() => handleProviderVerification(u._id, 'rejected')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20"><XCircle size={11} />Reject</button>
-                      </div>
-                    </td>
+        <div className="flex flex-col gap-6">
+          {/* Pending document verification requests */}
+          <div className="card overflow-hidden p-0">
+            <div className="p-5 border-b border-surface-border flex items-center justify-between">
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                <ShieldCheck size={14} className="text-brand-blue" />Document Verification Queue
+              </p>
+              <span className="badge-yellow text-[10px]">
+                {users.filter(u => u.role === 'provider').length} providers
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border">
+                    {['Provider', 'Email', 'Doc Status', 'Platform Verified', 'Documents', 'Skill Score', 'Actions'].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
+                    ))}
                   </tr>
-                ))}
-                {users.filter(u => u.role === 'provider').length === 0 && <tr><td colSpan={4} className="px-5 py-12 text-center text-gray-500">No providers found.</td></tr>}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.filter(u => u.role === 'provider').map(u => (
+                    <VerificationRow
+                      key={u._id}
+                      user={u}
+                      onApprove={() => handleProviderVerification(u._id, 'approved')}
+                      onReject={() => handleProviderVerification(u._id, 'rejected')}
+                      onVerify={() => handleVerify(u._id)}
+                      onSkillScore={async (score) => {
+                        try {
+                          await api.put(`/admin/providers/${u._id}/skill-score`, { skillScore: score, skillVerified: score >= 60 });
+                          toast.success('Skill score updated');
+                          fetchUsers();
+                        } catch { toast.error('Failed'); }
+                      }}
+                    />
+                  ))}
+                  {users.filter(u => u.role === 'provider').length === 0 && (
+                    <tr><td colSpan={7} className="px-5 py-12 text-center text-gray-500">No providers found.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

@@ -19,21 +19,21 @@ const seedDatabase = async () => {
 
   // ── Admin ───────────────────────────────────────────────────────────────
   const admin = await User.create({
-    name: 'Admin', email: 'admin@workforce.com', password: 'Admin@123',
+    name: 'Admin', email: 'admin@workforce.com', password: 'SkillForce@123',
     role: 'admin', verified: true, trustScore: 100,
     profileImage: 'https://ui-avatars.com/api/?name=Admin&background=0EA5E9&color=fff&size=200',
   });
 
   // ── Hiring Organizations (2) ────────────────────────────────────────────
   const hiringOrgs = await User.insertMany([
-    { name: 'Summit Media Strategies', email: 'summit@workforce.com', password: hash('Org@1234'), role: 'organization', orgType: 'hiring', verified: true, trustScore: 88, profileImage: 'https://ui-avatars.com/api/?name=Summit+Media&background=6366F1&color=fff&size=200' },
-    { name: 'City Hospital Lalitpur', email: 'hospital@workforce.com', password: hash('Org@1234'), role: 'organization', orgType: 'hiring', verified: true, trustScore: 92, profileImage: 'https://ui-avatars.com/api/?name=City+Hospital&background=10B981&color=fff&size=200' },
+    { name: 'Summit Media Strategies', email: 'summit@workforce.com', password: hash('SkillForce@123'), role: 'organization', orgType: 'hiring', verified: true, trustScore: 88, profileImage: 'https://ui-avatars.com/api/?name=Summit+Media&background=6366F1&color=fff&size=200' },
+    { name: 'City Hospital Lalitpur', email: 'hospital@workforce.com', password: hash('SkillForce@123'), role: 'organization', orgType: 'hiring', verified: true, trustScore: 92, profileImage: 'https://ui-avatars.com/api/?name=City+Hospital&background=10B981&color=fff&size=200' },
   ]);
 
   // ── Service Provider Organizations (2) ──────────────────────────────────
   const serviceOrgs = await User.insertMany([
-    { name: 'Nepal Shield Security', email: 'shield@workforce.com', password: hash('Org@1234'), role: 'organization', orgType: 'service_provider', verified: true, trustScore: 85, profileImage: 'https://ui-avatars.com/api/?name=Nepal+Shield&background=EF4444&color=fff&size=200' },
-    { name: 'CleanPro Nepal', email: 'cleanpro@workforce.com', password: hash('Org@1234'), role: 'organization', orgType: 'service_provider', verified: true, trustScore: 80, profileImage: 'https://ui-avatars.com/api/?name=CleanPro&background=F59E0B&color=fff&size=200' },
+    { name: 'Nepal Shield Security', email: 'shield@workforce.com', password: hash('SkillForce@123'), role: 'organization', orgType: 'service_provider', verified: true, trustScore: 85, profileImage: 'https://ui-avatars.com/api/?name=Nepal+Shield&background=EF4444&color=fff&size=200' },
+    { name: 'CleanPro Nepal', email: 'cleanpro@workforce.com', password: hash('SkillForce@123'), role: 'organization', orgType: 'service_provider', verified: true, trustScore: 80, profileImage: 'https://ui-avatars.com/api/?name=CleanPro&background=F59E0B&color=fff&size=200' },
   ]);
 
   await OrganizationProfile.insertMany([
@@ -45,11 +45,11 @@ const seedDatabase = async () => {
 
   // ── Individual Providers (5) ────────────────────────────────────────────
   const providers = await User.insertMany([
-    { name: 'Aarav Sharma', email: 'aarav@workforce.com', password: hash('Pro@1234'), role: 'provider', verified: true, trustScore: 90, profileImage: 'https://ui-avatars.com/api/?name=Aarav+Sharma&background=0EA5E9&color=fff&size=200' },
-    { name: 'Sita Thapa', email: 'sita@workforce.com', password: hash('Pro@1234'), role: 'provider', verified: false, trustScore: 72, profileImage: 'https://ui-avatars.com/api/?name=Sita+Thapa&background=EC4899&color=fff&size=200' },
-    { name: 'Bikash Gurung', email: 'bikash@workforce.com', password: hash('Pro@1234'), role: 'provider', verified: true, trustScore: 95, profileImage: 'https://ui-avatars.com/api/?name=Bikash+Gurung&background=10B981&color=fff&size=200' },
-    { name: 'Ramesh Tamang', email: 'ramesh@workforce.com', password: hash('Pro@1234'), role: 'provider', verified: true, trustScore: 78, profileImage: 'https://ui-avatars.com/api/?name=Ramesh+Tamang&background=F59E0B&color=fff&size=200' },
-    { name: 'Anita Rai', email: 'anita@workforce.com', password: hash('Pro@1234'), role: 'provider', verified: true, trustScore: 85, profileImage: 'https://ui-avatars.com/api/?name=Anita+Rai&background=8B5CF6&color=fff&size=200' },
+    { name: 'Aarav Sharma', email: 'aarav@workforce.com', password: hash('SkillForce@123'), role: 'provider', verified: true, trustScore: 90, profileImage: 'https://ui-avatars.com/api/?name=Aarav+Sharma&background=0EA5E9&color=fff&size=200' },
+    { name: 'Sita Thapa', email: 'sita@workforce.com', password: hash('SkillForce@123'), role: 'provider', verified: false, trustScore: 72, profileImage: 'https://ui-avatars.com/api/?name=Sita+Thapa&background=EC4899&color=fff&size=200' },
+    { name: 'Bikash Gurung', email: 'bikash@workforce.com', password: hash('SkillForce@123'), role: 'provider', verified: true, trustScore: 95, profileImage: 'https://ui-avatars.com/api/?name=Bikash+Gurung&background=10B981&color=fff&size=200' },
+    { name: 'Ramesh Tamang', email: 'ramesh@workforce.com', password: hash('SkillForce@123'), role: 'provider', verified: true, trustScore: 78, profileImage: 'https://ui-avatars.com/api/?name=Ramesh+Tamang&background=F59E0B&color=fff&size=200' },
+    { name: 'Anita Rai', email: 'anita@workforce.com', password: hash('SkillForce@123'), role: 'provider', verified: true, trustScore: 85, profileImage: 'https://ui-avatars.com/api/?name=Anita+Rai&background=8B5CF6&color=fff&size=200' },
   ]);
 
   await ProviderProfile.insertMany([

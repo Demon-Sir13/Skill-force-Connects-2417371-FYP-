@@ -5,9 +5,10 @@ import { useSocket } from '../context/SocketContext';
 import api from '../utils/api';
 import {
   Zap, Shield, ChevronDown, LogOut, User, Lock, Star,
-  Briefcase, Users, MessageSquare, Bell,
+  MessageSquare, Bell,
 } from 'lucide-react';
 import Avatar from './Avatar';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -40,14 +41,14 @@ export default function Navbar() {
   useEffect(() => {
     if (!user) return;
     api.get('/notifications/unread-count').then(({ data }) => setUnreadCount(data.count)).catch(() => {});
-    const interval = setInterval(() => {
+    const t = setInterval(() => {
       api.get('/notifications/unread-count').then(({ data }) => setUnreadCount(data.count)).catch(() => {});
     }, 30000);
-    return () => clearInterval(interval);
+    return () => clearInterval(t);
   }, [user]);
 
   const openNotifications = async () => {
-    setNotifOpen(!notifOpen);
+    setNotifOpen(v => !v);
     if (!notifOpen) {
       try { const { data } = await api.get('/notifications'); setNotifications(data.slice(0, 8)); } catch {}
     }
@@ -62,49 +63,68 @@ export default function Navbar() {
   };
 
   const handleLogout = () => { logout(); navigate('/'); setDropOpen(false); };
-  const active = (p) => pathname === p;
+  const isActive = (p) => pathname === p;
 
   const publicLinks = [
-    { to: '/jobs', label: 'Jobs' },
+    { to: '/jobs',      label: 'Jobs' },
     { to: '/providers', label: 'Providers' },
+    { to: '/about',     label: 'About' },
+    { to: '/investor',  label: 'Investors' },
   ];
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-500 ${
-      scrolled
-        ? 'bg-surface-bg/70 backdrop-blur-2xl border-b border-surface-border/40 shadow-[0_1px_30px_rgba(0,0,0,0.3)]'
-        : 'bg-transparent border-b border-transparent'
-    }`}>
+    <header
+      className="sticky top-0 z-50 transition-all duration-300"
+      style={scrolled ? {
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--border)',
+        boxShadow: '0 1px 20px rgba(0,0,0,0.08)',
+      } : { background: 'transparent', borderBottom: '1px solid transparent' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center
-                          shadow-glow-sm group-hover:shadow-glow-blue transition-all duration-500">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300"
+            style={{ background: 'linear-gradient(135deg, var(--brand-blue), var(--brand-indigo))' }}>
             <Zap size={15} className="text-white" />
           </div>
-          <span className="font-bold text-lg text-white tracking-tight">
+          <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text)' }}>
             Skill<span className="gradient-text">Force</span>
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
+        {/* Nav links */}
+        <nav className="hidden md:flex items-center gap-7 flex-1 justify-center">
           {publicLinks.map(({ to, label }) => (
-            <Link key={to} to={to} className={`text-sm font-medium transition-all duration-300 relative py-1
-              ${active(to) ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+            <Link
+              key={to}
+              to={to}
+              className="text-sm font-medium transition-all duration-200 relative py-1"
+              style={{ color: isActive(to) ? 'var(--text)' : 'var(--text-muted)' }}
+            >
               {label}
-              {active(to) && (
-                <span className="absolute -bottom-[19px] left-0 right-0 h-[2px] bg-gradient-brand rounded-full" />
+              {isActive(to) && (
+                <span className="absolute -bottom-[19px] left-0 right-0 h-[2px] rounded-full"
+                  style={{ background: 'linear-gradient(135deg, var(--brand-blue), var(--brand-indigo))' }} />
               )}
             </Link>
           ))}
           {user?.role === 'admin' && (
-            <Link to="/admin" className={`text-sm font-medium flex items-center gap-1.5 transition-all duration-300
-              ${active('/admin') ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+            <Link to="/admin"
+              className="text-sm font-medium flex items-center gap-1.5 transition-all duration-200"
+              style={{ color: isActive('/admin') ? 'var(--text)' : 'var(--text-muted)' }}>
               <Shield size={13} />Admin
             </Link>
           )}
         </nav>
 
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right side */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <ThemeToggle />
+
           {user ? (
             <>
               {/* Notification bell */}
@@ -117,19 +137,27 @@ export default function Navbar() {
                     </span>
                   )}
                 </button>
+
                 {notifOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 glass-card p-0 animate-scale-in z-50 max-h-96 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-                      <p className="text-sm font-semibold text-white">Notifications</p>
+                  <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl overflow-hidden z-50 max-h-96 animate-scale-in"
+                    style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-hover)' }}>
+                    <div className="flex items-center justify-between px-4 py-3"
+                      style={{ borderBottom: '1px solid var(--border)' }}>
+                      <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Notifications</p>
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} className="text-[11px] text-brand-blue hover:underline">Mark all read</button>
+                        <button onClick={markAllRead} className="text-[11px] text-brand-blue hover:underline">
+                          Mark all read
+                        </button>
                       )}
                     </div>
                     <div className="overflow-y-auto max-h-72">
                       {notifications.length === 0 ? (
-                        <p className="text-center text-gray-600 text-sm py-8">No notifications</p>
+                        <p className="text-center text-sm py-8" style={{ color: 'var(--text-muted)' }}>
+                          No notifications
+                        </p>
                       ) : notifications.map(n => (
-                        <div key={n._id}
+                        <div
+                          key={n._id}
                           onClick={async () => {
                             if (!n.read) {
                               try { await api.put(`/notifications/${n._id}/read`); } catch {}
@@ -137,18 +165,26 @@ export default function Navbar() {
                               setUnreadCount(c => Math.max(0, c - 1));
                             }
                             setNotifOpen(false);
-                            const url = n.referenceUrl || (
+                            navigate(n.referenceUrl || (
                               n.type === 'application' ? '/applications' :
                               n.type === 'contract' ? '/contracts' :
                               n.type === 'payment' ? '/subscriptions' :
                               n.relatedId ? `/jobs/${n.relatedId}` : '/dashboard'
-                            );
-                            navigate(url);
+                            ));
                           }}
-                          className={`px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.04] transition-colors cursor-pointer ${!n.read ? 'bg-brand-blue/[0.03]' : ''}`}>
-                          <p className="text-xs font-medium text-gray-200">{n.title}</p>
-                          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                          <p className="text-[10px] text-gray-700 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
+                          className="px-4 py-3 cursor-pointer transition-colors"
+                          style={{
+                            borderBottom: '1px solid var(--border-subtle)',
+                            background: !n.read ? 'rgba(14,165,233,0.03)' : 'transparent',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--hover)'}
+                          onMouseLeave={e => e.currentTarget.style.background = !n.read ? 'rgba(14,165,233,0.03)' : 'transparent'}
+                        >
+                          <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{n.title}</p>
+                          <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: 'var(--text-muted)' }}>{n.message}</p>
+                          <p className="text-[10px] mt-1" style={{ color: 'var(--text-disabled)' }}>
+                            {new Date(n.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -160,55 +196,80 @@ export default function Navbar() {
               <div className="tooltip-wrap hidden md:block">
                 <Link to="/messages" className="btn-icon relative">
                   <MessageSquare size={16} />
-                  {totalUnread > 0 && <span className="notif-dot animate-pulse" />}
+                  {totalUnread > 0 && <span className="notif-dot" />}
                 </Link>
                 <span className="tooltip">Messages{totalUnread > 0 ? ` (${totalUnread})` : ''}</span>
               </div>
 
               {/* User dropdown */}
               <div className="relative" ref={dropRef}>
-                <button onClick={() => setDropOpen(!dropOpen)}
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all duration-300
-                    ${dropOpen
-                      ? 'border-brand-blue/30 bg-brand-blue/[0.05]'
-                      : 'border-transparent hover:border-white/[0.06] hover:bg-white/[0.03]'}`}>
+                <button
+                  onClick={() => setDropOpen(v => !v)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-200"
+                  style={{
+                    border: `1px solid ${dropOpen ? 'rgba(14,165,233,0.3)' : 'var(--border)'}`,
+                    background: dropOpen ? 'rgba(14,165,233,0.05)' : 'transparent',
+                  }}
+                >
                   <Avatar src={user.profileImage} name={user.name} size="sm" />
-                  <span className="text-sm text-gray-400 max-w-[100px] truncate hidden sm:block">{user.name}</span>
-                  <ChevronDown size={13} className={`text-gray-600 transition-transform duration-300 ${dropOpen ? 'rotate-180' : ''}`} />
+                  <span className="text-sm max-w-[100px] truncate hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
+                    {user.name}
+                  </span>
+                  <ChevronDown size={13} className={`transition-transform duration-300 ${dropOpen ? 'rotate-180' : ''}`}
+                    style={{ color: 'var(--text-muted)' }} />
                 </button>
 
                 {dropOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-52 glass-card p-1.5 animate-scale-in z-50">
-                    <div className="px-3 py-2.5 mb-1 border-b border-white/[0.06]">
-                      <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                      <p className="text-[11px] text-gray-500 capitalize">{user.role}</p>
+                  <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl p-1.5 z-50 animate-scale-in"
+                    style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-hover)' }}>
+                    <div className="px-3 py-2.5 mb-1" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>{user.name}</p>
+                      <p className="text-[11px] capitalize" style={{ color: 'var(--text-muted)' }}>{user.role}</p>
                     </div>
                     {[
-                      { to: '/dashboard', icon: Zap, label: 'Dashboard' },
-                      { to: '/profile', icon: User, label: 'Profile' },
+                      { to: '/dashboard',       icon: Zap,  label: 'Dashboard' },
+                      { to: '/profile',         icon: User, label: 'Profile' },
                       { to: '/change-password', icon: Lock, label: 'Change Password' },
                     ].map(({ to, icon: Icon, label }) => (
-                      <Link key={to} to={to} onClick={() => setDropOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/[0.04] hover:text-white transition-all duration-200">
-                        <Icon size={14} className="text-gray-600" />
+                      <Link
+                        key={to}
+                        to={to}
+                        onClick={() => setDropOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                        style={{ color: 'var(--text-secondary)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                      >
+                        <Icon size={14} style={{ color: 'var(--text-muted)' }} />
                         {label}
                       </Link>
                     ))}
                     {user?.role === 'provider' && (
                       <Link to="/ratings" onClick={() => setDropOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/[0.04] hover:text-white transition-all duration-200">
-                        <Star size={14} className="text-gray-600" />My Ratings
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                        style={{ color: 'var(--text-secondary)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
+                        <Star size={14} style={{ color: 'var(--text-muted)' }} />My Ratings
                       </Link>
                     )}
                     {user?.role === 'admin' && (
                       <Link to="/admin" onClick={() => setDropOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400/80 hover:bg-red-500/[0.06] transition-all duration-200">
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                        style={{ color: '#f87171' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.06)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <Shield size={14} />Admin Panel
                       </Link>
                     )}
                     <div className="divider my-1" />
-                    <button onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400/80 hover:bg-red-500/[0.06] transition-all duration-200">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                      style={{ color: '#f87171' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.06)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
                       <LogOut size={14} />Logout
                     </button>
                   </div>

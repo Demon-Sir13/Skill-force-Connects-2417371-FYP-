@@ -21,6 +21,8 @@ const jobSchema = new mongoose.Schema(
     contractGenerated: { type: Boolean, default: false },
     urgency: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
     jobType: { type: String, enum: ['one-time', 'recurring', 'contract', 'part-time', 'full-time'], default: 'one-time' },
+    featured: { type: Boolean, default: false },
+    featuredUntil: { type: Date },
   },
   { timestamps: true }
 );

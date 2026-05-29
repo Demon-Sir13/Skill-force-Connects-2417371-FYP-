@@ -30,11 +30,30 @@ import Subscriptions from './pages/Subscriptions';
 import Contracts from './pages/Contracts';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
+import PaymentHistory from './pages/PaymentHistory';
+import About from './pages/About';
+import Investor from './pages/Investor';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
+// New Phase 4 pages
+import OrgApplicants    from './pages/OrgApplicants';
+import OrgDeliveries    from './pages/OrgDeliveries';
+import OrgAnalytics     from './pages/OrgAnalytics';
+import ProviderDeliveries from './pages/ProviderDeliveries';
+import AdminUsers       from './pages/AdminUsers';
+import AdminJobs        from './pages/AdminJobs';
+import AdminRevenue     from './pages/AdminRevenue';
+import AdminReports     from './pages/AdminReports';
+import AdminActivity    from './pages/AdminActivity';
+import VerifyContract   from './pages/VerifyContract';
+
 const WithSidebar = ({ children }) => (
-  <DashboardLayout>{children}</DashboardLayout>
+  <DashboardLayout>
+    <ErrorBoundary>
+      {children}
+    </ErrorBoundary>
+  </DashboardLayout>
 );
 
 const AppRoutes = () => (
@@ -43,10 +62,15 @@ const AppRoutes = () => (
     <Routes>
       {/* Public */}
       <Route path="/" element={<Landing />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/investor" element={<Investor />} />
       <Route path="/jobs" element={<Jobs />} />
       <Route path="/jobs/:id" element={<JobDetail />} />
       <Route path="/providers" element={<Providers />} />
       <Route path="/providers/:userId" element={<ProviderProfile />} />
+
+      {/* Public contract verification — no auth needed */}
+      <Route path="/verify-contract/:contractNumber" element={<VerifyContract />} />
 
       {/* Guest only */}
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
@@ -67,20 +91,30 @@ const AppRoutes = () => (
       <Route path="/messages/:userId" element={<PrivateRoute><WithSidebar><Messages /></WithSidebar></PrivateRoute>} />
       <Route path="/change-password" element={<PrivateRoute><WithSidebar><ChangePassword /></WithSidebar></PrivateRoute>} />
       <Route path="/subscriptions" element={<PrivateRoute><WithSidebar><Subscriptions /></WithSidebar></PrivateRoute>} />
+      <Route path="/payment-history" element={<PrivateRoute><WithSidebar><PaymentHistory /></WithSidebar></PrivateRoute>} />
       <Route path="/contracts" element={<PrivateRoute><WithSidebar><Contracts /></WithSidebar></PrivateRoute>} />
 
       {/* Organization only */}
       <Route path="/post-job" element={<PrivateRoute roles={['organization']}><WithSidebar><PostJob /></WithSidebar></PrivateRoute>} />
       <Route path="/my-jobs" element={<PrivateRoute roles={['organization']}><WithSidebar><MyJobs /></WithSidebar></PrivateRoute>} />
+      <Route path="/org/applicants" element={<PrivateRoute roles={['organization']}><WithSidebar><OrgApplicants /></WithSidebar></PrivateRoute>} />
+      <Route path="/org/deliveries" element={<PrivateRoute roles={['organization']}><WithSidebar><OrgDeliveries /></WithSidebar></PrivateRoute>} />
+      <Route path="/org/analytics"  element={<PrivateRoute roles={['organization']}><WithSidebar><OrgAnalytics /></WithSidebar></PrivateRoute>} />
 
       {/* Provider only */}
       <Route path="/my-assigned-jobs" element={<PrivateRoute roles={['provider']}><WithSidebar><MyAssignedJobs /></WithSidebar></PrivateRoute>} />
       <Route path="/earnings" element={<PrivateRoute roles={['provider']}><WithSidebar><Earnings /></WithSidebar></PrivateRoute>} />
       <Route path="/ratings" element={<PrivateRoute roles={['provider']}><WithSidebar><Ratings /></WithSidebar></PrivateRoute>} />
       <Route path="/applications" element={<PrivateRoute roles={['provider']}><WithSidebar><Applications /></WithSidebar></PrivateRoute>} />
+      <Route path="/provider/deliveries" element={<PrivateRoute roles={['provider']}><WithSidebar><ProviderDeliveries /></WithSidebar></PrivateRoute>} />
 
       {/* Admin only */}
-      <Route path="/admin" element={<AdminRoute><WithSidebar><AdminDashboard /></WithSidebar></AdminRoute>} />
+      <Route path="/admin"           element={<AdminRoute><WithSidebar><AdminDashboard /></WithSidebar></AdminRoute>} />
+      <Route path="/admin/users"     element={<AdminRoute><WithSidebar><AdminUsers /></WithSidebar></AdminRoute>} />
+      <Route path="/admin/jobs"      element={<AdminRoute><WithSidebar><AdminJobs /></WithSidebar></AdminRoute>} />
+      <Route path="/admin/revenue"   element={<AdminRoute><WithSidebar><AdminRevenue /></WithSidebar></AdminRoute>} />
+      <Route path="/admin/reports"   element={<AdminRoute><WithSidebar><AdminReports /></WithSidebar></AdminRoute>} />
+      <Route path="/admin/activity"  element={<AdminRoute><WithSidebar><AdminActivity /></WithSidebar></AdminRoute>} />
     </Routes>
 
     <Toaster

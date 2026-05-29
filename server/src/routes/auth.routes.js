@@ -2,7 +2,7 @@ const router = require('express').Router();
 const {
   register, login, verifyOtp, resendOtp,
   getMe, changePassword, forgotPassword, resetPassword,
-  refreshTokenHandler,
+  refreshTokenHandler, logout,
 } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { validateRegister, validateLogin, validateChangePassword } = require('../middleware/validate.middleware');
@@ -16,5 +16,6 @@ router.put('/change-password',  protect, validateChangePassword, changePassword)
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password',  resetPassword);
 router.post('/refresh-token',   refreshTokenHandler);
+router.post('/logout',          protect, logout);
 
 module.exports = router;

@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import JobCard from '../components/JobCard';
+import Avatar from '../components/Avatar';
 import { Plus, Briefcase, Clock, CheckCircle, TrendingUp, ArrowRight, Users, ListChecks, Sparkles, Target, FileText, MessageSquare } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-
-import Avatar from '../components/Avatar';
-
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 
 const appStatusBadge = { pending: 'badge-blue', shortlisted: 'badge-yellow', interview: 'badge-indigo', approved: 'badge-green', rejected: 'badge-red', contracted: 'badge-gray' };
 
@@ -25,11 +20,11 @@ export default function OrgDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?._id) return;
     api.get('/jobs', { params: { orgId: user._id } })
       .then(({ data }) => {
         const j = data.jobs || data;
-        setJobs(j);
-        // Fetch recommended providers for the first open job
+        setJobs(Array.isArray(j) ? j : []);
         const openJob = (Array.isArray(j) ? j : []).find(job => job.status === 'open');
         if (openJob) {
           api.get(`/matching/providers/${openJob._id}`)
@@ -40,25 +35,25 @@ export default function OrgDashboard() {
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    // Fetch recent applications using the org endpoint
     api.get('/applications/org')
       .then(({ data }) => {
-        const sorted = data.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+        const arr = Array.isArray(data) ? data : [];
+        const sorted = arr.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
         setRecentApps(sorted.slice(0, 10));
       })
       .catch(() => {});
 
-    // Auto-refresh applications every 30s
     const interval = setInterval(() => {
       api.get('/applications/org')
         .then(({ data }) => {
-          const sorted = data.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+          const arr = Array.isArray(data) ? data : [];
+          const sorted = arr.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
           setRecentApps(sorted.slice(0, 10));
         })
         .catch(() => {});
     }, 30000);
     return () => clearInterval(interval);
-  }, [user._id]);
+  }, [user?._id]);
 
   const open        = jobs.filter(j => j.status === 'open').length;
   const inProgress  = jobs.filter(j => j.status === 'in-progress').length;
@@ -116,19 +111,17 @@ export default function OrgDashboard() {
       </div>
 
       {/* Stats */}
-      <motion.div initial="hidden" animate="visible" variants={stagger}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-in-up">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
-          <motion.div key={label} variants={fadeUp} transition={{ duration: 0.4 }}
-            className="stat-card group hover:shadow-glow-sm">
+          <div key={label} className="stat-card group hover:shadow-glow-sm">
             <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
               <Icon size={18} className={color} />
             </div>
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
             <p className="text-gray-500 text-xs">{label}</p>
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
 
       {/* Budget by status chart */}
       {!loading && jobs.length > 0 && (

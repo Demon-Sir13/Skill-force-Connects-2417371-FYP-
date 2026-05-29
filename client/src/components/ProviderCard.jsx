@@ -6,7 +6,7 @@
  * Used in: Providers browse page, OrgDashboard recommendations.
  */
 import { Link } from 'react-router-dom';
-import { Star, Briefcase, ExternalLink, BadgeCheck, Shield, DollarSign, MapPin } from 'lucide-react';
+import { Star, Briefcase, ExternalLink, BadgeCheck, Shield, DollarSign, MapPin, Crown } from 'lucide-react';
 import Avatar from './Avatar';
 
 // Availability badge config — color + label + animation
@@ -69,6 +69,13 @@ export default function ProviderCard({ provider, onAssign }) {
           <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-blue/10 border border-brand-blue/20">
             <BadgeCheck size={10} className="text-brand-blue" />
             <span className="text-[9px] text-brand-blue font-semibold">Verified</span>
+          </div>
+        )}
+        {/* Featured / Premium badge */}
+        {provider.featured && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400/15 border border-yellow-400/30">
+            <Crown size={9} className="text-yellow-400" />
+            <span className="text-[9px] text-yellow-400 font-bold">FEATURED</span>
           </div>
         )}
       </div>

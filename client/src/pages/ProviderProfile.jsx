@@ -10,6 +10,8 @@ import {
 import Avatar from '../components/Avatar';
 import { motion } from 'framer-motion';
 
+import VerificationBadge from '../components/VerificationBadge';
+
 const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } };
 const stagger = { visible: { transition: { staggerChildren: 0.06 } } };
 
@@ -88,8 +90,11 @@ export default function ProviderProfile() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl font-bold text-white">{u?.name}</h1>
                   {u?.verified && <BadgeCheck size={16} className="text-brand-blue" />}
-                  {profile.verificationStatus === 'approved' && (
-                    <span className="badge-green text-[9px]">Verified</span>
+                  <VerificationBadge status={profile.verificationStatus || 'unverified'} />
+                  {profile.skillVerified && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                      ⚡ Skill Verified{profile.skillScore > 0 ? ` · ${profile.skillScore}%` : ''}
+                    </span>
                   )}
                 </div>
                 <p className="text-gray-600 text-sm mt-0.5">{u?.email}</p>

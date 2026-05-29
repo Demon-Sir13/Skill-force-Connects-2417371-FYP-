@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Zap, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, ShieldCheck, RefreshCw, Smartphone } from 'lucide-react';
+import { Zap, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, ShieldCheck, RefreshCw, Smartphone, Terminal } from 'lucide-react';
+
+const IS_DEV = import.meta.env.DEV;
 
 function validateCredentials(form) {
   const errs = {};
@@ -83,8 +85,8 @@ export default function Login() {
   };
 
   // ── Step 2: Verify OTP ──────────────────────────────────────────────────
-  const handleVerifyOtp = async () => {
-    const code = otpDigits.join('');
+  const handleVerifyOtp = async (digits) => {
+    const code = (digits || otpDigits).join('');
     if (code.length !== 6) { setOtpError('Enter all 6 digits'); return; }
     setOtpLoading(true);
     setOtpError('');
@@ -143,9 +145,9 @@ export default function Login() {
     if (otpError) setOtpError('');
     // Auto-advance
     if (value && index < 5) inputRefs.current[index + 1]?.focus();
-    // Auto-submit when all filled
+    // Auto-submit when all filled — pass fresh digits to avoid stale closure
     if (value && index === 5 && newDigits.every(d => d !== '')) {
-      setTimeout(() => handleVerifyOtp(), 150);
+      setTimeout(() => handleVerifyOtp(newDigits), 150);
     }
   };
 
@@ -168,16 +170,17 @@ export default function Login() {
     setOtpDigits(newDigits);
     const focusIdx = Math.min(pasted.length, 5);
     inputRefs.current[focusIdx]?.focus();
-    if (pasted.length === 6) setTimeout(() => handleVerifyOtp(), 150);
+    if (pasted.length === 6) setTimeout(() => handleVerifyOtp(newDigits), 150);
   };
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER
   // ══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+      style={{ background: 'var(--bg)' }}>
       {/* Background */}
-      <div className="absolute inset-0 bg-surface-bg" />
+      <div className="absolute inset-0" style={{ background: 'var(--bg)' }} />
       <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 60%)' }} />
       <div className="absolute inset-0 opacity-[0.01] pointer-events-none"
@@ -203,6 +206,18 @@ export default function Login() {
           {!otpState ? (
             /* ── STEP 1: Credentials ─────────────────────────────────── */
             <>
+              {IS_DEV && (
+                <div className="mb-5 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex gap-3 items-start">
+                  <Terminal size={15} className="text-amber-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-amber-300 text-xs font-semibold mb-1">Development Mode</p>
+                    <p className="text-amber-400/80 text-xs leading-relaxed">
+                      OTP codes and password reset links print to the <span className="font-mono bg-amber-500/20 px-1 rounded">server terminal</span>. No real emails are sent.
+                    </p>
+                    <p className="text-amber-400/60 text-xs mt-1.5">Demo password: <span className="font-mono bg-amber-500/20 px-1 rounded">SkillForce@123</span></p>
+                  </div>
+                </div>
+              )}
               <form onSubmit={handleCredentials} noValidate className="flex flex-col gap-5">
                 <div>
                   <label className="label" htmlFor="login-email">Email address</label>
@@ -257,6 +272,12 @@ export default function Login() {
               {/* OTP digit inputs */}
               <div>
                 <label className="label text-center block mb-3">Enter verification code</label>
+                {IS_DEV && (
+                  <div className="mb-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex gap-2.5 items-center">
+                    <Terminal size={13} className="text-amber-400 shrink-0" />
+                    <p className="text-amber-400/80 text-xs">OTP code printed to the <span className="font-mono bg-amber-500/20 px-1 rounded">server terminal</span></p>
+                  </div>
+                )}
                 <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
                   {otpDigits.map((digit, i) => (
                     <input

@@ -199,7 +199,7 @@ const forgotPassword = async (req, res) => {
     const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     user.passwordResetToken = resetTokenHash;
-    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+    user.passwordResetExpires = new Date(Date.now() + (process.env.NODE_ENV !== 'production' ? 60 : 15) * 60 * 1000); // 60 min dev, 15 min prod
     await user.save();
 
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
@@ -224,11 +224,30 @@ const forgotPassword = async (req, res) => {
     });
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`\n🔗 Password reset link for ${user.email}:\n${resetUrl}\n`);
+      console.log('\n╔══════════════════════════════════════════════════╗');
+      console.log('║        🔗  DEV PASSWORD RESET LINK               ║');
+      console.log('╠══════════════════════════════════════════════════╣');
+      console.log(`║  User:    ${user.email}`);
+      console.log(`║  Expires: 60 minutes from now`);
+      console.log('║──────────────────────────────────────────────────║');
+      console.log(`  ${resetUrl}`);
+      console.log('╚══════════════════════════════════════════════════╝\n');
     }
 
     res.json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ─── LOGOUT ───────────────────────────────────────────────────────────────────
+const logout = async (req, res) => {
+  try {
+    if (req.user?._id) {
+      await User.findByIdAndUpdate(req.user._id, { refreshToken: '' });
+    }
+    res.json({ message: 'Logged out successfully' });
+  } catch (err) {
+    res.json({ message: 'Logged out' }); // always succeed
+  }
 };
 
 // ─── RESET PASSWORD ───────────────────────────────────────────────────────────
@@ -265,4 +284,4 @@ const resetPassword = async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
-module.exports = { register, login, verifyOtp, resendOtp, getMe, changePassword, forgotPassword, resetPassword, refreshTokenHandler };
+module.exports = { register, login, verifyOtp, resendOtp, getMe, changePassword, forgotPassword, resetPassword, refreshTokenHandler, logout };

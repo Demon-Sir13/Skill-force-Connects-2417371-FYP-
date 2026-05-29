@@ -3,7 +3,14 @@ import { io } from 'socket.io-client';
 
 const SocketContext = createContext(null);
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001';
+const SOCKET_URL = (() => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    // Strip trailing /api if present
+    return apiUrl.replace(/\/api\/?$/, '');
+  }
+  return 'http://localhost:5000';
+})();
 
 export const SocketProvider = ({ children, token, userId }) => {
   const socketRef = useRef(null);
@@ -24,9 +31,15 @@ export const SocketProvider = ({ children, token, userId }) => {
 
     const socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
     });
     socketRef.current = socket;
+
+    socket.on('connect_error', () => {
+      // Suppress noisy connection errors in console — socket is optional
+    });
 
     socket.on('userOnline', (uid) => {
       setOnlineUsers(prev => new Set([...prev, uid]));

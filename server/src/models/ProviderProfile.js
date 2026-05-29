@@ -44,6 +44,9 @@ const providerProfileSchema = new mongoose.Schema(
     phone: { type: String, default: '' },
     hourlyRate: { type: Number, default: 0 },
     rating: { type: Number, default: 0, min: 0, max: 5 },
+    skillScore: { type: Number, default: 0, min: 0, max: 100 },
+    skillVerified: { type: Boolean, default: false },
+    skillVerifiedAt: { type: Date },
     totalReviews: { type: Number, default: 0 },
     totalJobsCompleted: { type: Number, default: 0 },
     totalEarnings: { type: Number, default: 0 },
@@ -71,11 +74,20 @@ const providerProfileSchema = new mongoose.Schema(
     // ── VERIFICATION ─────────────────────────────────────────────────────────
     verificationStatus: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
+      enum: ['unverified', 'pending', 'approved', 'rejected'],
+      default: 'unverified',
     },
+    citizenshipDoc: { type: String, default: '' },
+    certificateDoc: { type: String, default: '' },
+    verificationRequestedAt: { type: Date },
+    verificationNote: { type: String, default: '' },
     languages: [{ type: String }],
     education: { type: String, default: '' },
+
+    // ── PREMIUM / FEATURED ────────────────────────────────────────────────────
+    featured:      { type: Boolean, default: false },
+    featuredUntil: { type: Date },
+    premiumBadge:  { type: Boolean, default: false },
   },
   { timestamps: true }
 );

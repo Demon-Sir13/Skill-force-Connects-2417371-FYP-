@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { Zap, Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Zap, Mail, ArrowLeft, CheckCircle, AlertCircle, Terminal } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const IS_DEV = import.meta.env.DEV;
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -51,6 +53,17 @@ export default function ForgotPassword() {
         <div className="card p-7">
           {!sent ? (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              {IS_DEV && (
+                <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex gap-3 items-start">
+                  <Terminal size={15} className="text-amber-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-amber-300 text-xs font-semibold mb-1">Development Mode</p>
+                    <p className="text-amber-400/80 text-xs leading-relaxed">
+                      Reset link will print to the <span className="font-mono bg-amber-500/20 px-1 rounded">server terminal</span>. No email is sent.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="label" htmlFor="fp-email">Email address</label>
                 <div className="relative">
@@ -84,10 +97,13 @@ export default function ForgotPassword() {
               </div>
               <h3 className="font-semibold text-white mb-2">Check your inbox</h3>
               <p className="text-gray-400 text-sm mb-1">
-                We sent a reset link to <span className="text-brand-blue font-medium">{email}</span>
+                {IS_DEV
+                  ? <>Reset link printed to the <span className="font-mono text-amber-400 bg-amber-500/10 px-1 rounded">server terminal</span></>
+                  : <>We sent a reset link to <span className="text-brand-blue font-medium">{email}</span></>
+                }
               </p>
               <p className="text-gray-600 text-xs mb-6">
-                The link expires in 15 minutes. Check your spam folder too.
+                {IS_DEV ? 'Copy the URL from the terminal and open it in your browser.' : 'The link expires in 15 minutes. Check your spam folder too.'}
               </p>
               <button
                 onClick={() => { setSent(false); setEmail(''); }}

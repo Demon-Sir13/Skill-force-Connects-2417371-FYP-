@@ -12,6 +12,8 @@ const applicationSchema = new mongoose.Schema(
     },
     coverLetter: { type: String, required: true },
     cvFile: { type: String, default: '' },
+    citizenshipDoc: { type: String, default: '' },
+    certificateDoc: { type: String, default: '' },
     portfolioFiles: [{ type: String }],
     portfolioLink: { type: String, default: '' },
     expectedSalary: { type: Number, default: 0 },

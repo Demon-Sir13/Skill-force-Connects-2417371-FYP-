@@ -11,6 +11,7 @@ import {
 import AssignProviderModal from '../components/AssignProviderModal';
 import RateProviderModal from '../components/RateProviderModal';
 import Avatar from '../components/Avatar';
+import ApplyModal from '../components/ApplyModal';
 
 const statusMap = {
   open:          { badge: 'badge-green',  label: 'Open' },
@@ -30,12 +31,6 @@ export default function JobDetail() {
   const [showRate, setShowRate] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [showApply, setShowApply] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
-  const [cvFile, setCvFile] = useState('');
-  const [portfolioLink, setPortfolioLink] = useState('');
-  const [expectedSalary, setExpectedSalary] = useState('');
-  const [availabilityDate, setAvailabilityDate] = useState('');
-  const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicants, setApplicants] = useState([]);
   const [showApplicants, setShowApplicants] = useState(false);
@@ -68,27 +63,6 @@ export default function JobDetail() {
         }).catch(() => {});
     }
   }, [user, id]);
-
-  const handleApply = async () => {
-    if (!coverLetter.trim()) return toast.error('Cover letter is required');
-    setApplying(true);
-    try {
-      await api.post(`/applications/${id}`, {
-        coverLetter,
-        cvFile,
-        portfolioLink,
-        expectedSalary: expectedSalary ? Number(expectedSalary) : 0,
-        availabilityDate: availabilityDate || null,
-      });
-      toast.success('Application submitted!');
-      setShowApply(false);
-      setHasApplied(true);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to apply');
-    } finally {
-      setApplying(false);
-    }
-  };
 
   const fetchApplicants = async () => {
     try {
@@ -234,49 +208,27 @@ export default function JobDetail() {
           {isProvider && job.status === 'open' && !isOwner && (
             <div className="card p-5">
               {hasApplied ? (
-                <div className="flex items-center gap-3 text-green-400">
+                <div className="flex items-center gap-3 text-emerald-400">
                   <CheckCircle size={18} />
                   <p className="text-sm font-medium">You have already applied to this job</p>
                 </div>
-              ) : showApply ? (
-                <div>
-                  <p className="text-sm font-semibold text-white mb-4">Apply to this Job</p>
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <label className="label">Cover Letter <span className="text-red-400">*</span></label>
-                      <textarea className="input w-full resize-none" rows={4} placeholder="Why are you a great fit for this role?"
-                        value={coverLetter} onChange={e => setCoverLetter(e.target.value)} />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="label">CV / Resume URL</label>
-                        <input className="input" placeholder="https://drive.google.com/..." value={cvFile} onChange={e => setCvFile(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="label">Portfolio Link</label>
-                        <input className="input" placeholder="https://behance.net/..." value={portfolioLink} onChange={e => setPortfolioLink(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="label">Expected Salary (NPR)</label>
-                        <input className="input" type="number" placeholder="e.g. 50000" value={expectedSalary} onChange={e => setExpectedSalary(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="label">Available From</label>
-                        <input className="input" type="date" value={availabilityDate} onChange={e => setAvailabilityDate(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => setShowApply(false)} className="btn-ghost text-sm">Cancel</button>
-                      <button onClick={handleApply} disabled={applying || !coverLetter.trim()} className="btn-primary text-sm">
-                        <Send size={14} />{applying ? 'Submitting...' : 'Submit Application'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
               ) : (
-                <button onClick={() => setShowApply(true)} className="btn-primary w-full justify-center">
-                  <Send size={15} />Apply Now
-                </button>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                      Interested in this role?
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      Submit your application with cover letter and documents.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowApply(true)}
+                    className="btn-primary w-full justify-center"
+                  >
+                    <Send size={15} />Apply Now
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -450,6 +402,13 @@ export default function JobDetail() {
 
       {showAssign && <AssignProviderModal job={job} onClose={() => setShowAssign(false)} onAssigned={() => { setShowAssign(false); fetchJob(); }} />}
       {showRate && <RateProviderModal job={job} onClose={() => setShowRate(false)} onRated={() => { setShowRate(false); fetchJob(); }} />}
+      {showApply && (
+        <ApplyModal
+          job={job}
+          onClose={() => setShowApply(false)}
+          onSuccess={() => setHasApplied(true)}
+        />
+      )}
     </div>
   );
 }

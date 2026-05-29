@@ -30,6 +30,25 @@ router.put('/jobs/:id/approval', authorize('admin'), updateJobApproval);
 // Provider verification
 router.put('/providers/:id/verification', authorize('admin'), updateProviderVerification);
 
+// Skill score assignment
+router.put('/providers/:id/skill-score', authorize('admin'), async (req, res) => {
+  try {
+    const { skillScore, skillVerified } = req.body;
+    const ProviderProfile = require('../models/ProviderProfile');
+    const profile = await ProviderProfile.findOneAndUpdate(
+      { userId: req.params.id },
+      {
+        skillScore: Math.min(100, Math.max(0, Number(skillScore) || 0)),
+        skillVerified: !!skillVerified,
+        skillVerifiedAt: skillVerified ? new Date() : undefined,
+      },
+      { new: true }
+    );
+    if (!profile) return res.status(404).json({ message: 'Provider profile not found' });
+    res.json({ message: 'Skill score updated', profile });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // Reports — any authenticated user can file, admin can manage
 router.post('/reports',         protect, createReport);
 router.get('/reports',          authorize('admin'), getReports);

@@ -2,9 +2,66 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { User, Building2, Wrench, Save, Plus, X, Link as LinkIcon, CheckCircle, MapPin, Phone, Globe, Award, BookOpen } from 'lucide-react';
+import { User, Building2, Wrench, Save, Plus, X, Link as LinkIcon, CheckCircle, MapPin, Phone, Globe, Award, BookOpen, ShieldCheck } from 'lucide-react';
 import ImageUpload from '../components/ImageUpload';
 import WeeklySchedule from '../components/WeeklySchedule';
+import FileDropzone from '../components/FileDropzone';
+import VerificationBadge from '../components/VerificationBadge';
+
+function VerificationUpload({ userId, currentStatus }) {
+  const [files, setFiles] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleFile = (name, file) => setFiles(prev => ({ ...prev, [name]: file }));
+
+  const handleSubmit = async () => {
+    if (!files.citizenship) return toast.error('Citizenship document is required');
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('citizenship', files.citizenship);
+      if (files.certificate) fd.append('certificate', files.certificate);
+      await api.post('/providers/verification-request', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success('Verification request submitted! Admin will review shortly.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Submission failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (currentStatus === 'approved') {
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+        <ShieldCheck size={20} className="text-emerald-400" />
+        <p className="text-sm text-emerald-400 font-medium">Your identity has been verified by SkillForce admin.</p>
+      </div>
+    );
+  }
+
+  if (currentStatus === 'pending') {
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20">
+        <ShieldCheck size={20} className="text-yellow-400" />
+        <p className="text-sm text-yellow-400">Your documents are under review. We'll notify you within 24 hours.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FileDropzone label="Citizenship / National ID" name="citizenship" type="citizenship" onFile={handleFile} required />
+        <FileDropzone label="Certificate (optional)" name="certificate" type="certificate" onFile={handleFile} />
+      </div>
+      <button onClick={handleSubmit} disabled={submitting} className="btn-primary w-fit">
+        {submitting ? <><span className="spinner-sm" />Submitting...</> : <><ShieldCheck size={15} />Submit for Verification</>}
+      </button>
+    </div>
+  );
+}
 
 function completeness(profile, isOrg) {
   if (isOrg) {
@@ -33,9 +90,9 @@ export default function Profile() {
   const putUrl = isOrg ? '/organizations/me' : '/providers/me';
 
   useEffect(() => {
-    if (!user) return;
-    api.get(getUrl).then(({ data }) => setProfile(data)).catch(() => {}).finally(() => setLoading(false));
-  }, [user]);
+    if (!user?._id) return;
+    api.get(getUrl).then(({ data }) => setProfile(data || {})).catch(() => {}).finally(() => setLoading(false));
+  }, [user?._id]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -216,6 +273,22 @@ export default function Profile() {
             : <span className="flex items-center gap-2"><Save size={16} />Save Profile</span>}
         </button>
       </form>
+
+      {/* Verification Document Upload */}
+      {!isOrg && (
+        <div className="card p-7 mt-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-white flex items-center gap-2">
+              <ShieldCheck size={16} className="text-brand-blue" />Identity Verification
+            </h2>
+            <VerificationBadge status={profile?.verificationStatus || 'unverified'} size="lg" />
+          </div>
+          <p className="text-sm text-gray-400 mb-5">
+            Upload your citizenship and certificates to get a verified badge. Admin will review within 24 hours.
+          </p>
+          <VerificationUpload userId={user?._id} currentStatus={profile?.verificationStatus} />
+        </div>
+      )}
 
       {/* Weekly Schedule — only for providers, outside the main form */}
       {!isOrg && (

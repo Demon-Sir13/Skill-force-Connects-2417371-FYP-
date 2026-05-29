@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import JobCard from '../components/JobCard';
@@ -12,9 +11,6 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Avatar from '../components/Avatar';
 
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
-
 export default function ProviderDashboard() {
   const { user } = useAuth();
   const [openJobs,    setOpenJobs]    = useState([]);
@@ -25,6 +21,7 @@ export default function ProviderDashboard() {
   const [loading,     setLoading]     = useState(true);
 
   useEffect(() => {
+    if (!user?._id) return;
     Promise.all([
       api.get('/jobs', { params: { status: 'open' } }),
       api.get('/jobs', { params: { providerId: user._id } }),
@@ -39,8 +36,8 @@ export default function ProviderDashboard() {
       setProfile(profileRes.data);
       setEarnings(earningsRes.data);
       setRecommended(Array.isArray(matchRes.data) ? matchRes.data.slice(0, 6) : []);
-    }).finally(() => setLoading(false));
-  }, [user._id]);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [user?._id]);
 
   const stats = [
     { label: 'Open Jobs',      value: openJobs.length,                      icon: Search,      color: 'text-brand-blue',   bg: 'bg-brand-blue/10',   to: '/jobs' },
@@ -107,20 +104,17 @@ export default function ProviderDashboard() {
       </div>
 
       {/* Stats */}
-      <motion.div initial="hidden" animate="visible" variants={stagger}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-in-up">
         {stats.map(({ label, value, icon: Icon, color, bg, to }) => (
-          <motion.div key={label} variants={fadeUp} transition={{ duration: 0.4 }}>
-            <Link to={to} className="stat-card hover:border-brand-blue/30 transition-colors group block hover:shadow-glow-sm">
-              <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                <Icon size={18} className={color} />
-              </div>
-              <p className={`text-2xl font-bold ${color}`}>{value}</p>
-              <p className="text-gray-500 text-xs group-hover:text-gray-300 transition-colors">{label}</p>
-            </Link>
-          </motion.div>
+          <Link key={label} to={to} className="stat-card hover:border-brand-blue/30 transition-colors group block hover:shadow-glow-sm">
+            <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+              <Icon size={18} className={color} />
+            </div>
+            <p className={`text-2xl font-bold ${color}`}>{value}</p>
+            <p className="text-gray-500 text-xs group-hover:text-gray-300 transition-colors">{label}</p>
+          </Link>
         ))}
-      </motion.div>
+      </div>
 
       {/* Profile completeness warning */}
       {profile && (() => {
