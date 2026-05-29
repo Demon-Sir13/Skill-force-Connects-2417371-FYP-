@@ -69,8 +69,8 @@ export default function MyJobs() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Jobs</h1>
-          <p className="text-gray-500 text-sm mt-1">{counts.all} jobs posted</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>My Jobs</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>{counts.all} jobs posted</p>
         </div>
         <Link to="/post-job" className="btn-primary text-sm">
           <Plus size={15} />Post New Job
@@ -86,13 +86,18 @@ export default function MyJobs() {
           { value: 'completed',   label: 'Completed',   count: counts.completed },
         ].map(tab => (
           <button key={tab.value} onClick={() => setFilter(tab.value)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-              filter === tab.value
-                ? 'bg-brand-blue/15 text-brand-blue border border-brand-blue/30'
-                : 'text-gray-400 hover:text-white hover:bg-surface-hover border border-transparent'
-            }`}>
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2"
+            style={{
+              background: filter === tab.value ? 'rgba(14,165,233,0.1)' : 'transparent',
+              color: filter === tab.value ? 'var(--brand-blue)' : 'var(--text-muted)',
+              border: `1px solid ${filter === tab.value ? 'rgba(14,165,233,0.25)' : 'var(--border)'}`,
+            }}>
             {tab.label}
-            <span className={`text-xs px-1.5 py-0.5 rounded-md ${filter === tab.value ? 'bg-brand-blue/20' : 'bg-surface-border'}`}>
+            <span className="text-xs px-1.5 py-0.5 rounded-md"
+              style={{
+                background: filter === tab.value ? 'rgba(14,165,233,0.15)' : 'var(--hover)',
+                color: filter === tab.value ? 'var(--brand-blue)' : 'var(--text-muted)',
+              }}>
               {tab.count}
             </span>
           </button>
@@ -102,13 +107,16 @@ export default function MyJobs() {
       {/* Jobs list */}
       {loading ? (
         <div className="flex flex-col gap-3">
-          {[...Array(4)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-surface-hover" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-24 rounded-2xl" />)}
         </div>
       ) : jobs.length === 0 ? (
         <div className="card p-16 text-center">
-          <Briefcase size={36} className="mx-auto mb-4 text-gray-600" />
-          <p className="text-gray-400 mb-4">No jobs found</p>
-          <Link to="/post-job" className="btn-primary inline-flex">Post your first job</Link>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'var(--hover)' }}>
+            <Briefcase size={24} style={{ color: 'var(--text-muted)' }} />
+          </div>
+          <p className="font-semibold mb-1" style={{ color: 'var(--text)' }}>No jobs found</p>
+          <Link to="/post-job" className="btn-primary inline-flex mt-4">Post your first job</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -123,14 +131,15 @@ export default function MyJobs() {
                     {job.rated && <span className="badge-green text-[10px]">★ Rated</span>}
                   </div>
                   <Link to={`/jobs/${job._id}`}
-                    className="font-semibold text-white hover:text-brand-blue transition-colors line-clamp-1">
+                    className="font-semibold transition-colors duration-200 hover:text-brand-blue line-clamp-1"
+                    style={{ color: 'var(--text)' }}>
                     {job.title}
                   </Link>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                     {job.category} · ₨{job.budget?.toLocaleString()} · Due {new Date(job.deadline).toLocaleDateString()}
                   </p>
                   {job.assignedProviderId && (
-                    <p className="text-xs text-brand-indigo mt-1 flex items-center gap-1">
+                    <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--brand-indigo)' }}>
                       <UserCheck size={11} />Assigned: {job.assignedProviderId.name}
                     </p>
                   )}
@@ -140,15 +149,20 @@ export default function MyJobs() {
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
                   {/* Status dropdown */}
                   <div className="relative group">
-                    <button className="btn-ghost text-xs flex items-center gap-1.5 border border-surface-border px-3 py-2 rounded-xl">
+                    <button className="btn-ghost text-xs flex items-center gap-1.5 px-3 py-2 rounded-xl"
+                      style={{ border: '1px solid var(--border)' }}>
                       <s.icon size={13} />
                       <span className="capitalize">{job.status}</span>
                       <ChevronDown size={12} />
                     </button>
-                    <div className="absolute right-0 top-full mt-1 w-40 card p-1 z-10 hidden group-hover:block shadow-card animate-fade-in">
+                    <div className="absolute right-0 top-full mt-1 w-40 rounded-xl p-1 z-10 hidden group-hover:block"
+                      style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-hover)' }}>
                       {STATUS_OPTIONS.filter(o => o !== job.status).map(opt => (
                         <button key={opt} onClick={() => handleStatusChange(job._id, opt)}
-                          className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-surface-hover text-gray-300 hover:text-white capitalize transition-colors">
+                          className="w-full text-left px-3 py-2 text-xs rounded-lg transition-colors capitalize"
+                          style={{ color: 'var(--text-secondary)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
                           → {opt}
                         </button>
                       ))}
@@ -166,7 +180,8 @@ export default function MyJobs() {
                   {/* Message provider */}
                   {job.assignedProviderId && (
                     <Link to={`/messages/${job.assignedProviderId._id}`}
-                      className="btn-ghost text-xs px-3 py-2 border border-surface-border rounded-xl">
+                      className="btn-ghost text-xs px-3 py-2 rounded-xl"
+                      style={{ border: '1px solid var(--border)' }}>
                       <MessageSquare size={13} />Message
                     </Link>
                   )}

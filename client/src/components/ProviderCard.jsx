@@ -1,81 +1,92 @@
-/**
- * ProviderCard Component
- * 
- * Displays a provider's profile in a card format.
- * Shows live availability badge, skills, rating, work mode.
- * Used in: Providers browse page, OrgDashboard recommendations.
- */
 import { Link } from 'react-router-dom';
 import { Star, Briefcase, ExternalLink, BadgeCheck, Shield, DollarSign, MapPin, Crown } from 'lucide-react';
 import Avatar from './Avatar';
 
-// Availability badge config — color + label + animation
-const AVAIL_CONFIG = {
-  available:   { label: 'Available Now', dot: 'bg-emerald-400', text: 'text-emerald-400', bg: 'bg-emerald-400/10', pulse: true },
-  busy:        { label: 'Busy',          dot: 'bg-yellow-400',  text: 'text-yellow-400',  bg: 'bg-yellow-400/10',  pulse: false },
-  unavailable: { label: 'Offline',       dot: 'bg-gray-500',    text: 'text-gray-400',    bg: 'bg-gray-500/10',    pulse: false },
+const AVAIL = {
+  available:   { label: 'Available',  dot: '#34d399', text: '#34d399', bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.2)',  pulse: true },
+  busy:        { label: 'Busy',       dot: '#fbbf24', text: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.2)',  pulse: false },
+  unavailable: { label: 'Offline',    dot: '#94a3b8', text: '#94a3b8', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.15)', pulse: false },
 };
 
-const WORK_MODE_LABELS = {
-  freelance: 'Freelance', 'part-time': 'Part-Time',
-  'full-time': 'Full-Time', any: null,
-};
+const WORK_LABELS = { freelance: 'Freelance', 'part-time': 'Part-Time', 'full-time': 'Full-Time' };
 
 function StarRating({ value = 0 }) {
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map(n => (
+      {[1,2,3,4,5].map(n => (
         <Star key={n} size={10}
-          className={n <= Math.round(value) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-700'} />
+          className={n <= Math.round(value) ? 'text-yellow-400 fill-yellow-400' : ''}
+          style={n > Math.round(value) ? { color: 'var(--border)' } : {}} />
       ))}
-      <span className="text-[11px] text-gray-500 ml-1">{(value || 0).toFixed(1)}</span>
+      <span className="text-[11px] ml-1" style={{ color: 'var(--text-muted)' }}>
+        {(value || 0).toFixed(1)}
+      </span>
     </div>
   );
 }
 
-export default function ProviderCard({ provider, onAssign }) {
+export default function ProviderCard({ provider }) {
   const u = provider.userId;
-  const avail = AVAIL_CONFIG[provider.availability] || AVAIL_CONFIG.unavailable;
+  const avail = AVAIL[provider.availability] || AVAIL.unavailable;
   const trustScore = u?.trustScore || 0;
-  const trustColor = trustScore >= 80 ? 'text-emerald-400' : trustScore >= 60 ? 'text-brand-blue' : 'text-gray-500';
-  const workModeLabel = WORK_MODE_LABELS[provider.workMode];
+  const trustColor = trustScore >= 80 ? '#34d399' : trustScore >= 60 ? 'var(--brand-blue)' : 'var(--text-muted)';
+  const workLabel = WORK_LABELS[provider.workMode];
 
   return (
     <Link
       to={`/providers/${u?._id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl
-        bg-surface-card border border-surface-border
-        hover:border-white/[0.12] hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]
-        transition-all duration-300 cursor-pointer"
+      className="group relative flex flex-col overflow-hidden rounded-2xl transition-all duration-200"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-hover)';
+        e.currentTarget.style.borderColor = 'rgba(14,165,233,0.25)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-card)';
+        e.currentTarget.style.borderColor = 'var(--border)';
+      }}
     >
-      {/* Top gradient accent bar */}
-      <div className="h-1 bg-gradient-to-r from-brand-blue via-brand-indigo to-purple-500
-        opacity-30 group-hover:opacity-100 transition-opacity duration-300" />
+      {/* Top accent */}
+      <div className="h-0.5 opacity-40 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: 'linear-gradient(90deg, var(--brand-blue), var(--brand-indigo), #a855f7)' }} />
 
-      {/* Cover gradient */}
-      <div className="h-14 bg-gradient-to-br from-brand-blue/15 via-brand-indigo/8 to-purple-500/10 relative">
-        {/* Availability badge — top right */}
-        <div className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full ${avail.bg} border border-white/[0.06]`}>
+      {/* Cover */}
+      <div className="h-14 relative"
+        style={{ background: 'linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.06))' }}>
+        {/* Availability */}
+        <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+          style={{ background: avail.bg, border: `1px solid ${avail.border}` }}>
           <span className="relative flex h-2 w-2">
             {avail.pulse && (
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${avail.dot} opacity-60`} />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+                style={{ background: avail.dot }} />
             )}
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${avail.dot}`} />
+            <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: avail.dot }} />
           </span>
-          <span className={`text-[9px] font-semibold ${avail.text}`}>{avail.label}</span>
+          <span className="text-[9px] font-semibold" style={{ color: avail.text }}>{avail.label}</span>
         </div>
-        {/* Verified badge */}
+
+        {/* Verified */}
         {(provider.verificationStatus === 'approved' || u?.verified) && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-blue/10 border border-brand-blue/20">
-            <BadgeCheck size={10} className="text-brand-blue" />
-            <span className="text-[9px] text-brand-blue font-semibold">Verified</span>
+          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)' }}>
+            <BadgeCheck size={10} style={{ color: 'var(--brand-blue)' }} />
+            <span className="text-[9px] font-semibold" style={{ color: 'var(--brand-blue)' }}>Verified</span>
           </div>
         )}
-        {/* Featured / Premium badge */}
+
+        {/* Featured */}
         {provider.featured && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400/15 border border-yellow-400/30">
-            <Crown size={9} className="text-yellow-400" />
-            <span className="text-[9px] text-yellow-400 font-bold">FEATURED</span>
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
+            <Crown size={9} style={{ color: '#f59e0b' }} />
+            <span className="text-[9px] font-bold" style={{ color: '#f59e0b' }}>FEATURED</span>
           </div>
         )}
       </div>
@@ -84,39 +95,42 @@ export default function ProviderCard({ provider, onAssign }) {
         {/* Avatar + name */}
         <div className="flex items-end gap-3">
           <Avatar
-            src={u?.profileImage} name={u?.name} size="lg"
-            className="border-2 border-surface-card shadow-lg ring-1 ring-white/[0.06]
-              group-hover:ring-brand-blue/30 transition-all duration-300"
+            src={u?.profileImage}
+            name={u?.name}
+            size="lg"
+            className="ring-2 shadow-lg transition-all duration-200"
+            style={{ '--tw-ring-color': 'var(--card)' }}
           />
           <div className="min-w-0 flex-1 pb-1">
-            <p className="font-semibold text-white text-sm truncate group-hover:text-brand-blue transition-colors flex items-center gap-1.5">
+            <p className="font-semibold text-sm truncate flex items-center gap-1.5 transition-colors duration-200 group-hover:text-brand-blue"
+              style={{ color: 'var(--text)' }}>
               {u?.name}
-              {u?.verified && <BadgeCheck size={12} className="text-brand-blue shrink-0" />}
+              {u?.verified && <BadgeCheck size={12} style={{ color: 'var(--brand-blue)', flexShrink: 0 }} />}
             </p>
             <StarRating value={provider.rating} />
           </div>
         </div>
 
-        {/* Stats row */}
+        {/* Stats */}
         <div className="flex items-center gap-2 flex-wrap">
           {provider.hourlyRate > 0 && (
-            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold
-              bg-emerald-400/5 border border-emerald-400/10 px-2 py-0.5 rounded-lg">
+            <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-lg"
+              style={{ color: '#34d399', background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.12)' }}>
               <DollarSign size={9} />₨{provider.hourlyRate.toLocaleString()}/hr
             </span>
           )}
           {provider.totalJobsCompleted > 0 && (
-            <span className="flex items-center gap-1 text-[10px] text-gray-400
-              bg-white/[0.02] border border-white/[0.04] px-2 py-0.5 rounded-lg">
+            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg"
+              style={{ color: 'var(--text-muted)', background: 'var(--hover)', border: '1px solid var(--border)' }}>
               <Briefcase size={9} />{provider.totalJobsCompleted} jobs
             </span>
           )}
           {provider.location && (
-            <span className="flex items-center gap-1 text-[10px] text-gray-500">
+            <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
               <MapPin size={9} />{provider.location}
             </span>
           )}
-          <span className={`flex items-center gap-1 text-[10px] font-semibold ${trustColor} ml-auto`}>
+          <span className="flex items-center gap-1 text-[10px] font-semibold ml-auto" style={{ color: trustColor }}>
             <Shield size={9} />{trustScore}
           </span>
         </div>
@@ -125,14 +139,13 @@ export default function ProviderCard({ provider, onAssign }) {
         {provider.skills?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {provider.skills.slice(0, 4).map(s => (
-              <span key={s} className="text-[9px] px-2 py-0.5 rounded-md
-                bg-brand-blue/5 text-brand-blue/70 border border-brand-blue/10
-                group-hover:bg-brand-blue/10 transition-colors">
+              <span key={s} className="text-[9px] px-2 py-0.5 rounded-md transition-colors duration-200"
+                style={{ background: 'rgba(14,165,233,0.06)', color: 'var(--brand-blue)', border: '1px solid rgba(14,165,233,0.1)' }}>
                 {s}
               </span>
             ))}
             {provider.skills.length > 4 && (
-              <span className="text-[9px] px-2 py-0.5 rounded-md bg-white/[0.02] text-gray-600">
+              <span className="text-[9px] px-2 py-0.5 rounded-md" style={{ background: 'var(--hover)', color: 'var(--text-muted)' }}>
                 +{provider.skills.length - 4}
               </span>
             )}
@@ -141,19 +154,22 @@ export default function ProviderCard({ provider, onAssign }) {
 
         {/* Bio */}
         {provider.bio && (
-          <p className="text-[10px] text-gray-600 line-clamp-2 leading-relaxed">{provider.bio}</p>
+          <p className="text-[10px] line-clamp-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            {provider.bio}
+          </p>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.04] mt-auto">
-          <div className="flex items-center gap-2">
-            {workModeLabel && (
-              <span className="text-[9px] px-2 py-0.5 rounded-md bg-brand-indigo/5 text-brand-indigo/70 border border-brand-indigo/10 capitalize">
-                {workModeLabel}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] text-gray-600 group-hover:text-brand-blue flex items-center gap-1 transition-colors">
+        <div className="flex items-center justify-between pt-2.5 mt-auto"
+          style={{ borderTop: '1px solid var(--border)' }}>
+          {workLabel ? (
+            <span className="text-[9px] px-2 py-0.5 rounded-md"
+              style={{ background: 'rgba(99,102,241,0.06)', color: 'var(--brand-indigo)', border: '1px solid rgba(99,102,241,0.1)' }}>
+              {workLabel}
+            </span>
+          ) : <span />}
+          <span className="text-[10px] flex items-center gap-1 transition-colors duration-200 group-hover:text-brand-blue"
+            style={{ color: 'var(--text-disabled)' }}>
             View Profile <ExternalLink size={10} />
           </span>
         </div>

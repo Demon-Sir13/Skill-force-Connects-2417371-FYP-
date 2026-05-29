@@ -113,12 +113,12 @@ export default function OrgDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-in-up">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="stat-card group hover:shadow-glow-sm">
-            <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+          <div key={label} className="stat-card group">
+            <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}>
               <Icon size={18} className={color} />
             </div>
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
-            <p className="text-gray-500 text-xs">{label}</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
           </div>
         ))}
       </div>
@@ -361,8 +361,8 @@ export default function OrgDashboard() {
         </div>
       ) : jobs.length === 0 ? (
         <div className="card p-12 text-center">
-          <Briefcase size={36} className="mx-auto mb-4 text-gray-600" />
-          <p className="text-gray-400 mb-4">No jobs posted yet</p>
+          <Briefcase size={36} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+          <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>No jobs posted yet</p>
           <Link to="/post-job" className="btn-primary inline-flex">Post your first job</Link>
         </div>
       ) : (

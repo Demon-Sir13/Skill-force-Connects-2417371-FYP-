@@ -106,12 +106,12 @@ export default function ProviderDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-in-up">
         {stats.map(({ label, value, icon: Icon, color, bg, to }) => (
-          <Link key={label} to={to} className="stat-card hover:border-brand-blue/30 transition-colors group block hover:shadow-glow-sm">
-            <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+          <Link key={label} to={to} className="stat-card group block">
+            <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}>
               <Icon size={18} className={color} />
             </div>
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
-            <p className="text-gray-500 text-xs group-hover:text-gray-300 transition-colors">{label}</p>
+            <p className="text-xs transition-colors duration-200" style={{ color: 'var(--text-muted)' }}>{label}</p>
           </Link>
         ))}
       </div>
