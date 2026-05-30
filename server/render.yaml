@@ -12,7 +12,21 @@ services:
         value: production
       - key: JWT_EXPIRES_IN
         value: 7d
-      # Set these in Render dashboard — do NOT hardcode secrets here:
-      # JWT_SECRET, MONGO_URI, CLIENT_URL, EMAIL_USER, EMAIL_PASS,
-      # KHALTI_SECRET_KEY, ESEWA_MERCHANT_ID, ESEWA_SECRET_KEY,
-      # CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+      # ── Required secrets — set these in the Render dashboard ──────────────────
+      # JWT_SECRET          : 64-char random string (openssl rand -hex 32)
+      # MONGO_URI           : MongoDB Atlas connection string
+      #                       e.g. mongodb+srv://user:pass@cluster.mongodb.net/skillforce
+      # CLIENT_URL          : Your Vercel frontend URL (no trailing slash)
+      #                       e.g. https://your-app.vercel.app
+      # SERVER_URL          : This Render service's public URL (no trailing slash)
+      #                       e.g. https://skillforce-backend.onrender.com
+      #                       Used to build absolute URLs for uploaded file assets.
+      # EMAIL_USER          : Gmail address for sending emails
+      # EMAIL_PASS          : Gmail App Password (not your account password)
+      # EMAIL_FROM          : Display name + address, e.g. SkillForce Nepal <no-reply@skillforce.com.np>
+      # KHALTI_SECRET_KEY   : Khalti live secret key
+      # ESEWA_MERCHANT_ID   : eSewa merchant code (EPAYTEST for sandbox)
+      # ESEWA_SECRET_KEY    : eSewa HMAC secret key
+      # ── Optional ──────────────────────────────────────────────────────────────
+      # CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+      #   Only needed if you switch from local disk uploads to Cloudinary.

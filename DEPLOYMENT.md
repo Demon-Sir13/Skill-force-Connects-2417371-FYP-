@@ -1,447 +1,184 @@
-# WorkForce Deployment Guide
+# SkillForce Deployment Guide
 
-Complete guide for deploying to **Vercel** (frontend), **Render** (backend), and **MongoDB Atlas** (database).
+Deploy to **Vercel** (frontend) + **Render** (backend) + **MongoDB Atlas** (database).
 
 ---
 
 ## Prerequisites
 
-- Node.js 18+ installed locally
-- Git repository (GitHub/GitLab)
-- Accounts created:
-  - [Vercel](https://vercel.com)
-  - [Render](https://render.com)
-  - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-  - [Stripe](https://dashboard.stripe.com) (for payments)
-  - Gmail or SendGrid (for emails)
+- Node.js 18+ locally
+- GitHub repo with this code pushed
+- Accounts: [Vercel](https://vercel.com), [Render](https://render.com), [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- Gmail account with 2FA enabled (for email)
 
 ---
 
-## Part 1: MongoDB Atlas Setup
+## Part 1: MongoDB Atlas
 
-### 1.1 Create Cluster
-
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create a free M0 cluster (select AWS, region closest to your users)
-3. Create database user:
-   - Username: `workforce_admin`
-   - Password: Generate strong password (save it!)
-4. Network Access → Add IP: `0.0.0.0/0` (allow from anywhere)
-
-### 1.2 Get Connection String
-
-1. Click "Connect" on your cluster
-2. Choose "Connect your application"
-3. Copy the connection string:
+1. Create a free M0 cluster (AWS, region closest to users)
+2. **Database Access** → Add user: `skillforce_admin` with a strong password
+3. **Network Access** → Add IP `0.0.0.0/0` (allow all — Render uses dynamic IPs)
+4. **Connect** → "Connect your application" → copy the URI:
    ```
-   mongodb+srv://workforce_admin:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+   mongodb+srv://skillforce_admin:<password>@cluster0.xxxxx.mongodb.net/skillforce?retryWrites=true&w=majority
    ```
-4. Replace `<password>` with your actual password
-5. Add database name: `mongodb+srv://...mongodb.net/workforce?retryWrites=true&w=majority`
+   Replace `<password>` with your actual password.
 
 ---
 
-## Part 2: Backend Deployment (Render)
+## Part 2: Backend on Render
 
-### 2.1 Prepare Backend
+### 2.1 Create Web Service
 
-1. Create `render.yaml` in project root:
-
-```yaml
-services:
-  - type: web
-    name: workforce-api
-    env: node
-    region: oregon
-    plan: free
-    buildCommand: cd server && npm install
-    startCommand: cd server && npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 5001
-      - key: MONGO_URI
-        sync: false
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 7d
-      - key: CLIENT_URL
-        sync: false
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: 587
-      - key: EMAIL_USER
-        sync: false
-      - key: EMAIL_PASS
-        sync: false
-      - key: EMAIL_FROM
-        value: WorkForce <no-reply@workforce.app>
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-```
-
-2. Update `server/package.json` scripts:
-
-```json
-{
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
-  }
-}
-```
-
-### 2.2 Deploy to Render
-
-1. Push code to GitHub
-2. Go to [Render Dashboard](https://dashboard.render.com)
-3. New → Web Service
-4. Connect your GitHub repo
-5. Configure:
-   - **Name:** workforce-api
-   - **Region:** Oregon (or closest)
-   - **Branch:** main
-   - **Root Directory:** server
+1. Render Dashboard → **New → Web Service**
+2. Connect your GitHub repo
+3. Settings:
+   - **Root Directory:** `server`
    - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-6. Add Environment Variables:
-   - `MONGO_URI`: Your Atlas connection string
-   - `JWT_SECRET`: Generate random 32+ char string
-   - `CLIENT_URL`: (will add after Vercel deploy)
-   - `EMAIL_USER`: your@gmail.com
-   - `EMAIL_PASS`: Gmail App Password (see below)
-   - `STRIPE_SECRET_KEY`: From Stripe dashboard
-   - `STRIPE_WEBHOOK_SECRET`: (will add after webhook setup)
-7. Click "Create Web Service"
-8. Wait for deployment (5-10 min)
-9. Copy your API URL: `https://workforce-api-xxxx.onrender.com`
+   - **Start Command:** `node src/index.js`
+   - **Node version:** 18+
 
-### 2.3 Gmail App Password Setup
+### 2.2 Environment Variables (set in Render dashboard)
 
-1. Go to [Google Account Security](https://myaccount.google.com/security)
-2. Enable 2-Step Verification
-3. Search "App passwords"
-4. Generate password for "Mail"
-5. Copy 16-character password → use as `EMAIL_PASS`
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `PORT` | `10000` |
+| `JWT_EXPIRES_IN` | `7d` |
+| `JWT_SECRET` | 64-char random string (`openssl rand -hex 32`) |
+| `MONGO_URI` | Your Atlas connection string |
+| `CLIENT_URL` | Your Vercel URL, e.g. `https://your-app.vercel.app` |
+| `SERVER_URL` | This Render service URL, e.g. `https://skillforce-backend.onrender.com` |
+| `EMAIL_USER` | Your Gmail address |
+| `EMAIL_PASS` | Gmail App Password (see below) |
+| `EMAIL_FROM` | `SkillForce Nepal <no-reply@skillforce.com.np>` |
+| `KHALTI_SECRET_KEY` | Khalti live secret key |
+| `ESEWA_MERCHANT_ID` | eSewa merchant code |
+| `ESEWA_SECRET_KEY` | eSewa HMAC secret |
+
+> **Note:** `SERVER_URL` is used to build absolute URLs for uploaded images. Without it, image URLs may be incorrect behind Render's reverse proxy.
+
+### 2.3 Gmail App Password
+
+1. [Google Account Security](https://myaccount.google.com/security) → Enable 2-Step Verification
+2. Search "App passwords" → Generate for "Mail"
+3. Use the 16-character password as `EMAIL_PASS`
+
+### 2.4 Deploy
+
+Click **Create Web Service**. First deploy takes ~5 min. Copy your URL:
+`https://skillforce-backend.onrender.com`
 
 ---
 
-## Part 3: Frontend Deployment (Vercel)
+## Part 3: Frontend on Vercel
 
-### 3.1 Prepare Frontend
+### 3.1 Import Project
 
-1. Create `vercel.json` in `client/` folder:
-
-```json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
-
-2. Update `client/vite.config.js`:
-
-```javascript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:5001',
-        changeOrigin: true,
-      },
-    },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['lucide-react', 'react-hot-toast'],
-          socket: ['socket.io-client'],
-        },
-      },
-    },
-  },
-});
-```
-
-3. Update `client/src/utils/api.js`:
-
-```javascript
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  timeout: 15000,
-});
-
-// ... rest of file
-```
-
-### 3.2 Deploy to Vercel
-
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Import Project → Select your GitHub repo
-3. Configure:
+1. Vercel Dashboard → **Add New → Project**
+2. Import your GitHub repo
+3. Settings:
    - **Framework Preset:** Vite
-   - **Root Directory:** client
+   - **Root Directory:** `client`
    - **Build Command:** `npm run build`
-   - **Output Directory:** dist
-4. Add Environment Variable:
-   - `VITE_API_URL`: Your Render API URL (e.g., `https://workforce-api-xxxx.onrender.com/api`)
-5. Click "Deploy"
-6. Wait for deployment (2-3 min)
-7. Copy your Vercel URL: `https://workforce-xxxx.vercel.app`
+   - **Output Directory:** `dist`
 
-### 3.3 Update Backend with Frontend URL
+### 3.2 Environment Variables (set in Vercel dashboard)
 
-1. Go back to Render dashboard
-2. Environment → Add/Update:
-   - `CLIENT_URL`: Your Vercel URL
-3. Trigger manual deploy
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | Your Render URL, e.g. `https://skillforce-backend.onrender.com` |
 
----
+> **Important:** Do NOT include `/api` at the end — the client code appends it automatically.
 
-## Part 4: Stripe Webhook Setup
+### 3.3 Deploy
 
-### 4.1 Configure Webhook
+Click **Deploy**. Copy your Vercel URL: `https://your-app.vercel.app`
 
-1. Go to [Stripe Dashboard](https://dashboard.stripe.com/test/webhooks)
-2. Add endpoint: `https://workforce-api-xxxx.onrender.com/api/payments/webhook`
-3. Select events:
-   - `checkout.session.completed`
-4. Copy "Signing secret" (starts with `whsec_`)
-5. Add to Render env vars:
-   - `STRIPE_WEBHOOK_SECRET`: Your signing secret
-6. Redeploy backend
+### 3.4 Update Render with Vercel URL
+
+Go back to Render → Environment → set `CLIENT_URL` to your Vercel URL → **Save** (triggers redeploy).
 
 ---
 
-## Part 5: Database Seeding (Optional)
+## Part 4: Verify Deployment
 
-### 5.1 Create Admin User
-
-Connect to MongoDB Atlas using MongoDB Compass or CLI:
-
-```javascript
-// Create admin user
-db.users.insertOne({
-  name: "Admin User",
-  email: "admin@workforce.app",
-  password: "$2a$12$...", // Use bcrypt to hash "admin123"
-  role: "admin",
-  profileImage: "",
-  suspended: false,
-  createdAt: new Date(),
-  updatedAt: new Date()
-});
+### Health check
+```
+GET https://skillforce-backend.onrender.com/
+→ { "message": "SkillForce API running", "status": "ok" }
 ```
 
-Or register normally and update role:
-
-```javascript
-db.users.updateOne(
-  { email: "your@email.com" },
-  { $set: { role: "admin" } }
-);
-```
-
-### 5.2 Seed Sample Data (Optional)
-
-```javascript
-// Sample organizations
-db.users.insertMany([
-  {
-    name: "Summit Media Strategies",
-    email: "summit@example.com",
-    password: "$2a$12$...",
-    role: "organization",
-    createdAt: new Date()
-  },
-  {
-    name: "City Hospital",
-    email: "hospital@example.com",
-    password: "$2a$12$...",
-    role: "organization",
-    createdAt: new Date()
-  }
-]);
-
-// Sample jobs
-db.jobs.insertMany([
-  {
-    organizationId: ObjectId("..."),
-    title: "Video Editor Needed",
-    description: "Looking for experienced video editor for social media content",
-    category: "Design",
-    budget: 1500,
-    deadline: new Date("2024-12-31"),
-    status: "open",
-    createdAt: new Date()
-  }
-]);
-```
-
----
-
-## Part 6: Post-Deployment Checklist
-
-### 6.1 Test Everything
-
-- [ ] Visit your Vercel URL
+### Functional checklist
 - [ ] Register as organization
 - [ ] Register as provider
+- [ ] Login (OTP email received)
 - [ ] Post a job
-- [ ] Apply to job
+- [ ] Apply to a job
+- [ ] Upload a profile image
 - [ ] Test messaging
-- [ ] Test payments (use Stripe test card: `4242 4242 4242 4242`)
-- [ ] Test admin panel
-- [ ] Test email notifications
-
-### 6.2 Monitor
-
-- **Render Logs:** Check for errors in Render dashboard
-- **Vercel Logs:** Check deployment logs
-- **MongoDB Atlas:** Monitor connections and queries
-
-### 6.3 Custom Domain (Optional)
-
-**Vercel:**
-1. Domains → Add Domain
-2. Add DNS records from your provider
-
-**Render:**
-1. Settings → Custom Domain
-2. Add CNAME record
+- [ ] Test Khalti/eSewa payment flow
+- [ ] Admin panel accessible at `/admin`
 
 ---
 
-## Part 7: Environment Variables Reference
+## Part 5: Troubleshooting
 
-### Backend (Render)
+**Frontend can't reach backend**
+- Verify `VITE_API_URL` in Vercel env vars (no trailing slash, no `/api`)
+- Check CORS: `CLIENT_URL` on Render must exactly match your Vercel URL
 
-```bash
+**Emails not sending**
+- Verify `EMAIL_USER` + `EMAIL_PASS` are set on Render
+- Gmail App Password must be used (not your account password)
+- Check Render logs: `[Email] Gmail SMTP connected` should appear on startup
+
+**Images not loading after upload**
+- Set `SERVER_URL` on Render to your Render service's public URL
+- Render free tier has an ephemeral filesystem — uploaded images are lost on redeploy.
+  For persistent uploads, configure Cloudinary (set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`).
+
+**Socket.io not connecting**
+- Render free tier supports WebSockets
+- `CLIENT_URL` on Render must match the Vercel origin exactly
+
+**Render cold starts (free tier)**
+- Free tier sleeps after 15 min of inactivity; first request takes ~30s to wake
+- Upgrade to Render Starter ($7/mo) to avoid cold starts
+
+---
+
+## Part 6: Ephemeral Filesystem Warning
+
+Render's free tier does **not** persist files between deploys. Uploaded images (avatars, banners, portfolio) stored in `server/uploads/` will be lost on each deploy.
+
+**Solution:** Configure Cloudinary for persistent cloud storage:
+1. Create a free [Cloudinary](https://cloudinary.com) account
+2. Add to Render env vars: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+3. The upload routes will need to be updated to use `multer-storage-cloudinary` instead of disk storage.
+
+---
+
+## Environment Variables Summary
+
+### Render (backend)
+```
 NODE_ENV=production
-PORT=5001
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/workforce
-JWT_SECRET=your_super_secret_key_min_32_characters
+PORT=10000
 JWT_EXPIRES_IN=7d
-CLIENT_URL=https://workforce-xxxx.vercel.app
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
+JWT_SECRET=<64-char-random>
+MONGO_URI=mongodb+srv://...
+CLIENT_URL=https://your-app.vercel.app
+SERVER_URL=https://skillforce-backend.onrender.com
 EMAIL_USER=your@gmail.com
-EMAIL_PASS=your_app_password
-EMAIL_FROM=WorkForce <no-reply@workforce.app>
-STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxx
-STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
+EMAIL_PASS=<gmail-app-password>
+EMAIL_FROM=SkillForce Nepal <no-reply@skillforce.com.np>
+KHALTI_SECRET_KEY=<khalti-live-key>
+ESEWA_MERCHANT_ID=<esewa-merchant-id>
+ESEWA_SECRET_KEY=<esewa-secret>
 ```
 
-### Frontend (Vercel)
-
-```bash
-VITE_API_URL=https://workforce-api-xxxx.onrender.com/api
+### Vercel (frontend)
 ```
-
----
-
-## Part 8: Troubleshooting
-
-### Backend won't start
-- Check Render logs for errors
-- Verify MongoDB connection string
-- Ensure all env vars are set
-
-### Frontend can't connect to backend
-- Check CORS settings in `server/src/index.js`
-- Verify `VITE_API_URL` is correct
-- Check browser console for errors
-
-### Emails not sending
-- Verify Gmail App Password
-- Check spam folder
-- Review Render logs for email errors
-
-### Stripe webhook failing
-- Verify webhook URL is correct
-- Check signing secret matches
-- Test with Stripe CLI locally first
-
-### Socket.io not connecting
-- Ensure WebSocket support on Render (free tier supports it)
-- Check CORS configuration includes Socket.io
-
----
-
-## Part 9: Scaling & Production Tips
-
-### Performance
-- Enable MongoDB Atlas indexes
-- Use Render's paid tier for better performance
-- Add Redis for caching (optional)
-- Implement CDN for static assets
-
-### Security
-- Rotate JWT secret regularly
-- Use strong passwords
-- Enable MongoDB Atlas IP whitelist
-- Set up rate limiting (already configured)
-- Regular security audits
-
-### Monitoring
-- Set up Sentry for error tracking
-- Use LogRocket for session replay
-- Monitor Render metrics
-- Set up uptime monitoring (UptimeRobot)
-
-### Backup
-- Enable MongoDB Atlas automated backups
-- Export critical data regularly
-- Version control all code
-
----
-
-## Support
-
-For issues:
-1. Check Render/Vercel logs
-2. Review MongoDB Atlas metrics
-3. Test locally first
-4. Check environment variables
-
----
-
-## Cost Breakdown (Free Tier)
-
-- **MongoDB Atlas:** Free (M0 cluster, 512MB)
-- **Render:** Free (750 hours/month, sleeps after 15min inactivity)
-- **Vercel:** Free (100GB bandwidth, unlimited deployments)
-- **Stripe:** Free (2.9% + $0.30 per transaction)
-- **Total:** $0/month for development/testing
-
-**Note:** Render free tier sleeps after inactivity. First request after sleep takes ~30s to wake up.
-
----
-
-## Next Steps
-
-1. Deploy and test thoroughly
-2. Add custom domain
-3. Set up monitoring
-4. Create user documentation
-5. Plan feature roadmap
-6. Gather user feedback
-
-🚀 **Your WorkForce platform is now live!**
+VITE_API_URL=https://skillforce-backend.onrender.com
+```

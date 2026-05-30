@@ -4,8 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Zap, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, ShieldCheck, RefreshCw, Smartphone, Terminal } from 'lucide-react';
 
-const IS_DEV = import.meta.env.DEV;
-
 function validateCredentials(form) {
   const errs = {};
   if (!form.email.trim()) errs.email = 'Email is required';
@@ -158,7 +156,7 @@ export default function Login() {
       inputRefs.current[index - 1]?.focus();
     }
     if (e.key === 'Enter') {
-      const code = codeOverride !== undefined ? codeOverride : otpDigits.join('');
+      const code = otpDigits.join('');
       if (code.length === 6) handleVerifyOtp();
     }
   };

@@ -7,8 +7,6 @@ import { motion } from 'framer-motion';
 
 const IS_DEV = import.meta.env.DEV;
 
-const IS_DEV = import.meta.env.DEV;
-
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
