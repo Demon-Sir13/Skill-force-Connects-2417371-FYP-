@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 
 const IS_DEV = import.meta.env.DEV;
 
+const IS_DEV = import.meta.env.DEV;
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -102,6 +104,14 @@ export default function ForgotPassword() {
                   : <>We sent a reset link to <span className="text-brand-blue font-medium">{email}</span></>
                 }
               </p>
+                            {IS_DEV && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 mb-4">
+                  <span className="text-yellow-400 text-sm shrink-0">??</span>
+                  <p className="text-xs text-yellow-300 leading-relaxed">
+                    <strong>Dev Mode:</strong> Reset URL is printed in the server terminal. No real email sent.
+                  </p>
+                </div>
+              )}
               <p className="text-gray-600 text-xs mb-6">
                 {IS_DEV ? 'Copy the URL from the terminal and open it in your browser.' : 'The link expires in 15 minutes. Check your spam folder too.'}
               </p>

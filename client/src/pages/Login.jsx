@@ -15,6 +15,8 @@ function validateCredentials(form) {
   return errs;
 }
 
+const IS_DEV = import.meta.env.DEV;
+
 export default function Login() {
   const { login, verifyOtp, resendOtp, otpState, clearOtpState } = useAuth();
   const navigate = useNavigate();
@@ -156,7 +158,7 @@ export default function Login() {
       inputRefs.current[index - 1]?.focus();
     }
     if (e.key === 'Enter') {
-      const code = otpDigits.join('');
+      const code = codeOverride !== undefined ? codeOverride : otpDigits.join('');
       if (code.length === 6) handleVerifyOtp();
     }
   };
@@ -272,6 +274,14 @@ export default function Login() {
               {/* OTP digit inputs */}
               <div>
                 <label className="label text-center block mb-3">Enter verification code</label>
+              {IS_DEV && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 mb-1">
+                  <span className="text-yellow-400 text-sm shrink-0">??</span>
+                  <p className="text-xs text-yellow-300 leading-relaxed">
+                    <strong>Dev Mode:</strong> OTP is printed in the server terminal. Check your console.
+                  </p>
+                </div>
+              )}
                 {IS_DEV && (
                   <div className="mb-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex gap-2.5 items-center">
                     <Terminal size={13} className="text-amber-400 shrink-0" />

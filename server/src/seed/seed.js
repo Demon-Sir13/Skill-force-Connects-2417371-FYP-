@@ -134,11 +134,11 @@ const seedDatabase = async () => {
   ]);
 
   console.log('[Seed] Nepal demo data created successfully!');
-  console.log('[Seed] Admin:    admin@workforce.com / Admin@123');
-  console.log('[Seed] Org:      summit@workforce.com / Org@1234');
-  console.log('[Seed] Provider: aarav@workforce.com / Pro@1234');
-  console.log('[Seed] Security: shield@workforce.com / Org@1234');
-  console.log('[Seed] Cleaning: cleanpro@workforce.com / Org@1234');
+  console.log('[Seed] Admin:    admin@workforce.com / SkillForce@123');
+  console.log('[Seed] Org:      summit@workforce.com / SkillForce@123');
+  console.log('[Seed] Provider: aarav@workforce.com / SkillForce@123');
+  console.log('[Seed] Security: shield@workforce.com / SkillForce@123');
+  console.log('[Seed] Cleaning: cleanpro@workforce.com / SkillForce@123');
 };
 
 module.exports = { seedDatabase };
